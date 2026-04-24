@@ -14,9 +14,6 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY . .
-
 RUN chmod +x start.sh
 
-EXPOSE 8000
-
-CMD ["/bin/bash", "start.sh"]
+CMD ["/bin/bash", "/app/start.sh"]

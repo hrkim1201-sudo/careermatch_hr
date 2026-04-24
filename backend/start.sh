@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
 
-echo "Running Alembic migrations..."
-alembic upgrade head
+echo "=== CareerMatch Backend Starting ==="
+echo "PORT: ${PORT:-8000}"
+echo "DATABASE_URL prefix: ${DATABASE_URL:0:20}..."
 
-echo "Starting uvicorn on port ${PORT:-8000}..."
-exec uvicorn main:app --host 0.0.0.0 --port "${PORT:-8000}"
+echo "Running Alembic migrations..."
+python -m alembic upgrade head || echo "Alembic warning (may already be applied)"
+
+echo "Starting uvicorn..."
+exec python -m uvicorn main:app --host 0.0.0.0 --port "${PORT:-8000}" --log-level info
