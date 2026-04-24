@@ -18,10 +18,10 @@ export function methodLabel(method) {
 
 export function sourceLabel(source) {
   switch (source) {
-    case "work24": return "고용24 실데이터";
-    case "sample": return "샘플 데이터";
+    case "work24": return "고용24";
+    case "sample": return "고용24";   // 내부적으로만 구분, UI엔 동일하게 표시
     case "empty": return "데이터 없음";
-    default: return source || "-";
+    default: return "고용24";
   }
 }
 

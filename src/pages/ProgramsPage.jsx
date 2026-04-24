@@ -4,12 +4,11 @@ import { usePrograms } from "../hooks/usePrograms.js";
 import ProgramCard from "../components/program/ProgramCard.jsx";
 import ProgramFilters from "../components/program/ProgramFilters.jsx";
 import Button from "../components/common/Button.jsx";
-import { sourceLabel } from "../lib/format.js";
 import styles from "./ProgramsPage.module.css";
 
 export default function ProgramsPage() {
   const navigate = useNavigate();
-  const { programs, counts, source, loading, error, seed } = usePrograms();
+  const { programs, counts, loading, error, seed } = usePrograms();
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
 
@@ -36,6 +35,7 @@ export default function ProgramsPage() {
         </div>
         <div className={styles.navActions}>
           <Button onClick={() => navigate("/qualifications")}>국가자격</Button>
+          <Button onClick={() => navigate("/jobs")}>채용공고</Button>
           <Button variant="primary" onClick={() => navigate("/portfolio")}>
             추천 받기
           </Button>
@@ -47,11 +47,11 @@ export default function ProgramsPage() {
           <div>
             <h1 className={styles.title}>훈련과정 목록</h1>
             <p className={styles.subtitle}>
-              현재 데이터: <strong>{sourceLabel(source)}</strong>
+              국민내일배움카드 · 일학습병행 · 취업역량강화 과정
             </p>
           </div>
           <Button onClick={seed} disabled={loading}>
-            {loading ? "로딩 중..." : "샘플 데이터 시딩"}
+            {loading ? "불러오는 중..." : "데이터 갱신"}
           </Button>
         </header>
 
@@ -85,13 +85,9 @@ export default function ProgramsPage() {
         </div>
 
         {error && <div className={styles.error}>{error}</div>}
-        {loading && (
-          <div className={styles.loading}>프로그램을 불러오는 중...</div>
-        )}
+        {loading && <div className={styles.loading}>훈련과정을 불러오는 중...</div>}
         {!loading && !error && filtered.length === 0 && (
-          <div className={styles.empty}>
-            데이터가 없습니다. 상단의 &apos;샘플 데이터 시딩&apos; 버튼을 눌러주세요.
-          </div>
+          <div className={styles.empty}>조건에 맞는 훈련과정이 없습니다.</div>
         )}
 
         <div className={styles.list}>
