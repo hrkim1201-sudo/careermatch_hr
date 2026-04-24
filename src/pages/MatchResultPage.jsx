@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePortfolioStore } from "../store/portfolioStore.js";
 import { api } from "../lib/apiClient.js";
-import Button from "../components/common/Button.jsx";
+import Nav from "../components/common/Nav.jsx";
 import Card from "../components/common/Card.jsx";
 import ProgramCard from "../components/program/ProgramCard.jsx";
 import MatchScoreBadge from "../components/match/MatchScoreBadge.jsx";
@@ -30,10 +30,7 @@ export default function MatchResultPage() {
     ranRef.current = true;
     setLoading(true);
     api.directMatch(prompt)
-      .then((body) => {
-        setResults(body.results || []);
-        setUsedMethod(body.used_method);
-      })
+      .then((body) => { setResults(body.results || []); setUsedMethod(body.used_method); })
       .catch((e) => setError(e.message || "추천에 실패했습니다."))
       .finally(() => setLoading(false));
   }, [prompt]);
@@ -44,36 +41,19 @@ export default function MatchResultPage() {
       const body = await api.generateGuide(program.id, { prompt });
       setGuideById((s) => ({ ...s, [program.id]: body }));
     } catch (e) {
-      setGuideById((s) => ({
-        ...s,
-        [program.id]: { guide: `가이드를 불러오지 못했습니다: ${e.message}`, questions: [], used_method: "error" },
-      }));
-    } finally {
-      setGuideLoadingId(null);
-    }
+      setGuideById((s) => ({ ...s, [program.id]: { guide: `가이드 오류: ${e.message}`, questions: [], used_method: "error" } }));
+    } finally { setGuideLoadingId(null); }
   };
 
-  const toggleQuals = (id) => setExpandedQuals((s) => ({ ...s, [id]: !s[id] }));
-  const toggleJobs = (id) => setExpandedJobs((s) => ({ ...s, [id]: !s[id] }));
-
-  const handleRetry = () => { reset(); navigate("/"); };
+  const toggle = (setter, id) => setter((s) => ({ ...s, [id]: !s[id] }));
 
   return (
     <div className={styles.page}>
-      <nav className={styles.nav}>
-        <div className={styles.logo} onClick={() => navigate("/")}>Career<span>Match</span></div>
-        <div className={styles.navActions}>
-          <Button onClick={() => navigate("/programs")}>훈련과정</Button>
-          <Button onClick={() => navigate("/qualifications")}>국가자격</Button>
-          <Button onClick={() => navigate("/jobs")}>채용공고</Button>
-          <Button variant="primary" onClick={handleRetry}>다시 검색</Button>
-        </div>
-      </nav>
-
+      <Nav />
       <main className={styles.container}>
         {prompt && (
           <div className={styles.queryBox}>
-            <span className={styles.queryLabel}>검색 내용</span>
+            <span className={styles.queryLabel}>검색</span>
             <span className={styles.queryText}>{prompt}</span>
           </div>
         )}
@@ -81,30 +61,23 @@ export default function MatchResultPage() {
         <header className={styles.header}>
           <h1 className={styles.title}>추천 결과</h1>
           {!loading && results.length > 0 && (
-            <div className={styles.meta}>
-              {results.length}개 프로그램 · 추천 방식: <strong>{methodLabel(usedMethod)}</strong>
-            </div>
+            <span className={styles.meta}>{results.length}개 · {methodLabel(usedMethod)}</span>
           )}
+          <button className={styles.retryBtn} onClick={() => { reset(); navigate("/"); }}>
+            다시 검색
+          </button>
         </header>
 
         {loading && (
           <div className={styles.loading}>
             <div className={styles.spinner} />
-            <p>AI가 경로를 분석하고 있습니다...</p>
+            <p>AI가 경로를 분석 중입니다...</p>
           </div>
         )}
-
-        {error && (
-          <div className={styles.error}>
-            <p>{error}</p>
-            <Button onClick={handleRetry}>다시 시도</Button>
-          </div>
-        )}
-
+        {error && <div className={styles.error}><p>{error}</p></div>}
         {!prompt && !loading && (
-          <Card>
-            <p>검색어가 없습니다.</p>
-            <Button variant="primary" onClick={() => navigate("/")}>처음으로</Button>
+          <Card><p>검색어가 없습니다.</p>
+            <button className={styles.retryBtn} onClick={() => navigate("/")}>처음으로</button>
           </Card>
         )}
 
@@ -114,44 +87,35 @@ export default function MatchResultPage() {
               <div className={styles.itemHead}>
                 <MatchScoreBadge score={item.score} />
                 {item.reason_keywords?.length > 0 && (
-                  <span className={styles.reason}>관련: {item.reason_keywords.join(", ")}</span>
+                  <span className={styles.reason}>{item.reason_keywords.join(", ")}</span>
                 )}
               </div>
 
-              <ProgramCard program={item.program} />
+              <ProgramCard program={item.program} compact />
 
-              {/* 연관 국가자격 */}
               {item.related_qualifications?.length > 0 && (
                 <div className={styles.section}>
-                  <button className={styles.sectionToggle} onClick={() => toggleQuals(item.id)}>
-                    🏆 관련 국가자격 {item.related_qualifications.length}개
-                    {expandedQuals[item.id] ? " ▲" : " ▼"}
+                  <button className={styles.toggler} onClick={() => toggle(setExpandedQuals, item.id)}>
+                    🏆 관련 국가자격 {item.related_qualifications.length}개 {expandedQuals[item.id] ? "▲" : "▼"}
                   </button>
                   {expandedQuals[item.id] && (
-                    <div className={styles.grid}>
+                    <div className={styles.subGrid}>
                       {item.related_qualifications.map((rq) => (
-                        <QualificationCard
-                          key={rq.qualification.qual_code}
-                          qualification={rq.qualification}
-                          relevance={rq.relevance}
-                          nextExam={rq.next_exam}
-                          compact
-                        />
+                        <QualificationCard key={rq.qualification.qual_code} qualification={rq.qualification}
+                          relevance={rq.relevance} nextExam={rq.next_exam} compact />
                       ))}
                     </div>
                   )}
                 </div>
               )}
 
-              {/* 관련 채용공고 */}
               {item.related_jobs?.length > 0 && (
                 <div className={styles.section}>
-                  <button className={styles.sectionToggle + " " + styles.jobToggle} onClick={() => toggleJobs(item.id)}>
-                    💼 관련 채용공고 {item.related_jobs.length}개
-                    {expandedJobs[item.id] ? " ▲" : " ▼"}
+                  <button className={`${styles.toggler} ${styles.jobToggler}`} onClick={() => toggle(setExpandedJobs, item.id)}>
+                    💼 관련 채용공고 {item.related_jobs.length}개 {expandedJobs[item.id] ? "▲" : "▼"}
                   </button>
                   {expandedJobs[item.id] && (
-                    <div className={styles.grid}>
+                    <div className={styles.subGrid}>
                       {item.related_jobs.map((job) => (
                         <JobCard key={job.id} job={job} compact />
                       ))}
@@ -160,8 +124,10 @@ export default function MatchResultPage() {
                 </div>
               )}
 
-              <div className={styles.actions}>
-                <Button onClick={() => onShowGuide(item.program)}>학습 가이드 보기</Button>
+              <div className={styles.guideRow}>
+                <button className={styles.guideBtn} onClick={() => onShowGuide(item.program)}>
+                  학습 가이드 보기
+                </button>
               </div>
               <GuidePanel
                 guide={guideById[item.program.id]?.guide}
