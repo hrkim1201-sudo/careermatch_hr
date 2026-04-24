@@ -139,3 +139,22 @@ class GuideResponse(BaseModel):
     guide: str
     questions: list[str]
     used_method: str
+
+
+# ── NLP Parser ───────────────────────────────────────────────────────────────
+class ParseRequest(BaseModel):
+    prompt: str
+
+
+class ParsedInput(BaseModel):
+    prompt: str
+    skills: list[str] = Field(default_factory=list)
+    location: str = ""
+    online: bool = False
+    parsed_by: str = "rule"
+
+
+class DirectMatchRequest(BaseModel):
+    """자연어 입력 → 파싱 → 추천을 한 번에."""
+    prompt: str
+    top_k: int | None = None

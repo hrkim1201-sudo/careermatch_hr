@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePortfolioStore } from "../store/portfolioStore.js";
-import { useMatch } from "../hooks/useMatch.js";
+import { api } from "../lib/apiClient.js";
 import Button from "../components/common/Button.jsx";
 import Card from "../components/common/Card.jsx";
 import ProgramCard from "../components/program/ProgramCard.jsx";
@@ -13,33 +13,38 @@ import styles from "./MatchResultPage.module.css";
 
 export default function MatchResultPage() {
   const navigate = useNavigate();
-  const { prompt, skills, preferences } = usePortfolioStore();
-  const { results, usedMethod, loading, error, run, fetchGuide } = useMatch();
+  const { prompt, reset } = usePortfolioStore();
+  const [results, setResults] = useState([]);
+  const [usedMethod, setUsedMethod] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [guideById, setGuideById] = useState({});
   const [guideLoadingId, setGuideLoadingId] = useState(null);
   const [expandedQuals, setExpandedQuals] = useState({});
-
-  const hasInput = (prompt && prompt.trim().length > 0) || skills.length > 0;
+  const ranRef = useRef(false);
 
   useEffect(() => {
-    if (!hasInput) return;
-    run({ prompt, skills, preferences }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!prompt || ranRef.current) return;
+    ranRef.current = true;
+    setLoading(true);
+    api.directMatch(prompt)
+      .then((body) => {
+        setResults(body.results || []);
+        setUsedMethod(body.used_method);
+      })
+      .catch((e) => setError(e.message || "추천에 실패했습니다."))
+      .finally(() => setLoading(false));
+  }, [prompt]);
 
   const onShowGuide = async (program) => {
     setGuideLoadingId(program.id);
     try {
-      const body = await fetchGuide(program.id, { prompt });
+      const body = await api.generateGuide(program.id, { prompt });
       setGuideById((s) => ({ ...s, [program.id]: body }));
     } catch (e) {
       setGuideById((s) => ({
         ...s,
-        [program.id]: {
-          guide: `가이드를 불러오지 못했습니다: ${e.message || e}`,
-          questions: [],
-          used_method: "error",
-        },
+        [program.id]: { guide: `가이드를 불러오지 못했습니다: ${e.message}`, questions: [], used_method: "error" },
       }));
     } finally {
       setGuideLoadingId(null);
@@ -49,6 +54,11 @@ export default function MatchResultPage() {
   const toggleQuals = (id) =>
     setExpandedQuals((s) => ({ ...s, [id]: !s[id] }));
 
+  const handleRetry = () => {
+    reset();
+    navigate("/");
+  };
+
   return (
     <div className={styles.page}>
       <nav className={styles.nav}>
@@ -56,49 +66,66 @@ export default function MatchResultPage() {
         <div className={styles.navActions}>
           <Button onClick={() => navigate("/programs")}>훈련과정</Button>
           <Button onClick={() => navigate("/qualifications")}>국가자격</Button>
-          <Button onClick={() => navigate("/portfolio")}>다시 입력</Button>
+          <Button variant="primary" onClick={handleRetry}>다시 검색</Button>
         </div>
       </nav>
 
       <main className={styles.container}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>추천 결과</h1>
-          <div className={styles.meta}>
-            {results.length}개 프로그램 · 추천 방식: <strong>{methodLabel(usedMethod) || "-"}</strong>
+        {/* 입력한 내용 요약 */}
+        {prompt && (
+          <div className={styles.queryBox}>
+            <span className={styles.queryLabel}>검색 내용</span>
+            <span className={styles.queryText}>{prompt}</span>
           </div>
-        </header>
-
-        {!hasInput && (
-          <Card>
-            <p>먼저 희망 직무나 목표를 입력해 주세요.</p>
-            <Button variant="primary" onClick={() => navigate("/portfolio")}>입력 페이지로 이동</Button>
-          </Card>
         )}
 
-        {loading && <div className={styles.loading}>AI가 추천 경로를 분석 중입니다...</div>}
-        {error && <div className={styles.error}>{error}</div>}
+        <header className={styles.header}>
+          <h1 className={styles.title}>추천 결과</h1>
+          {!loading && results.length > 0 && (
+            <div className={styles.meta}>
+              {results.length}개 프로그램 · 추천 방식: <strong>{methodLabel(usedMethod)}</strong>
+            </div>
+          )}
+        </header>
+
+        {loading && (
+          <div className={styles.loading}>
+            <div className={styles.spinner} />
+            <p>AI가 경로를 분석하고 있습니다...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className={styles.error}>
+            <p>{error}</p>
+            <Button onClick={handleRetry}>다시 시도</Button>
+          </div>
+        )}
+
+        {!prompt && !loading && (
+          <Card>
+            <p>검색어가 없습니다.</p>
+            <Button variant="primary" onClick={() => navigate("/")}>처음으로</Button>
+          </Card>
+        )}
 
         <div className={styles.list}>
           {results.map((item) => (
             <div key={item.id} className={styles.item}>
-              {/* 점수 + 키워드 */}
               <div className={styles.itemHead}>
                 <MatchScoreBadge score={item.score} />
                 {item.reason_keywords?.length > 0 && (
-                  <span className={styles.reason}>관련 키워드: {item.reason_keywords.join(", ")}</span>
+                  <span className={styles.reason}>
+                    관련: {item.reason_keywords.join(", ")}
+                  </span>
                 )}
               </div>
 
-              {/* 훈련과정 카드 */}
               <ProgramCard program={item.program} />
 
-              {/* 연관 국가자격 */}
               {item.related_qualifications?.length > 0 && (
                 <div className={styles.quals}>
-                  <button
-                    className={styles.qualsToggle}
-                    onClick={() => toggleQuals(item.id)}
-                  >
+                  <button className={styles.qualsToggle} onClick={() => toggleQuals(item.id)}>
                     🎓 관련 국가자격 {item.related_qualifications.length}개
                     {expandedQuals[item.id] ? " ▲" : " ▼"}
                   </button>
@@ -118,7 +145,6 @@ export default function MatchResultPage() {
                 </div>
               )}
 
-              {/* 학습 가이드 */}
               <div className={styles.actions}>
                 <Button onClick={() => onShowGuide(item.program)}>
                   학습 가이드 보기

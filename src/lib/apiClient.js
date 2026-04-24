@@ -21,10 +21,15 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  // Programs
   listPrograms: () => request("/api/programs"),
   seedPrograms: () => request("/api/programs/seed", { method: "POST" }),
-  // Match
+  // 자연어 직접 매칭 (새 엔드포인트)
+  directMatch: (prompt, top_k) =>
+    request("/api/match/direct", {
+      method: "POST",
+      body: JSON.stringify({ prompt, top_k }),
+    }),
+  // 기존 매칭
   match: (payload) =>
     request("/api/match", { method: "POST", body: JSON.stringify(payload) }),
   generateGuide: (programId, payload) =>
@@ -32,7 +37,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  // Qualifications
   listQualifications: (params = {}) => {
     const qs = new URLSearchParams(
       Object.fromEntries(
@@ -41,12 +45,10 @@ export const api = {
     ).toString();
     return request(`/api/qualifications${qs ? "?" + qs : ""}`);
   },
-  getQualification: (qualCode) => request(`/api/qualifications/${qualCode}`),
-  getQualSchedules: (qualCode) =>
-    request(`/api/qualifications/${qualCode}/schedules`),
   refreshQualifications: () =>
     request("/api/qualifications/refresh", { method: "POST" }),
-  // Portfolio
+  seedQualifications: () =>
+    request("/api/qualifications/seed", { method: "POST" }),
   createPortfolio: (payload) =>
     request("/api/portfolio", { method: "POST", body: JSON.stringify(payload) }),
 };
