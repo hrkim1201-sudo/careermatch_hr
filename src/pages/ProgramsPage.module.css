@@ -1,0 +1,133 @@
+.page {
+  min-height: 100vh;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-8);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.logo span {
+  color: var(--color-primary);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+  gap: var(--space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  margin: var(--space-1) 0 0;
+  font-size: 13px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.stat {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat strong {
+  font-size: 22px;
+  color: var(--color-primary);
+}
+
+.stat span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.search {
+  flex: 1;
+  min-width: 240px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  padding: var(--space-2) var(--space-3);
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.error,
+.empty,
+.loading {
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+
+.error {
+  color: var(--color-danger);
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+@media (max-width: 720px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .list {
+    grid-template-columns: 1fr;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

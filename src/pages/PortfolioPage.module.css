@@ -1,0 +1,125 @@
+.page {
+  min-height: 100vh;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-8);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.logo span {
+  color: var(--color-primary);
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-6);
+}
+
+.title {
+  font-size: 30px;
+  margin-bottom: var(--space-2);
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-6);
+}
+
+.label {
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.textarea,
+.input {
+  width: 100%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  padding: var(--space-3);
+}
+
+.textarea:focus,
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.skillRow {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.skillRow .input {
+  flex: 1;
+}
+
+.skillTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.skillTag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.removeBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 var(--space-1);
+}
+
+.removeBtn:hover {
+  color: var(--color-danger);
+}
+
+.empty {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.prefRow {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-6);
+}

@@ -1,0 +1,25 @@
+.badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.high {
+  background: rgba(127, 225, 192, 0.15);
+  color: var(--color-accent);
+  border: 1px solid rgba(127, 225, 192, 0.3);
+}
+
+.mid {
+  background: rgba(91, 140, 255, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(91, 140, 255, 0.3);
+}
+
+.low {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
