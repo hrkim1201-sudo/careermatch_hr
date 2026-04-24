@@ -1,9 +1,4 @@
-"""훈련과정 목록 및 시딩 엔드포인트.
-
-고용24 API 접근이 제한되어 있으므로 샘플 데이터를 기본으로 사용합니다.
-실제 훈련과정 데이터는 /api/programs/seed 엔드포인트로 시딩하거나
-DB에 직접 입력하는 방식을 사용합니다.
-"""
+"""훈련과정 엔드포인트."""
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -12,6 +7,7 @@ from app.repositories import program_repo
 from app.schemas import ProgramListResponse, ProgramRead, ProgramRefreshResponse
 from app.services import embedding
 from app.services.program_catalog import seed_sample_programs
+from app.services.work24_programs import fetch_and_store
 
 router = APIRouter()
 
@@ -29,9 +25,17 @@ def list_programs(db: Session = Depends(get_db)) -> ProgramListResponse:
     )
 
 
+@router.post("/refresh", response_model=ProgramRefreshResponse)
+def refresh_programs(db: Session = Depends(get_db)) -> ProgramRefreshResponse:
+    """Work24 API에서 실데이터를 가져옵니다. 실패하면 샘플 데이터로 fallback."""
+    fetched, source = fetch_and_store(db)
+    embedding.reset_tfidf_cache()
+    return ProgramRefreshResponse(fetched=fetched, source=source)
+
+
 @router.post("/seed", response_model=ProgramRefreshResponse)
 def seed_programs(db: Session = Depends(get_db)) -> ProgramRefreshResponse:
-    """샘플 훈련과정 데이터를 DB에 시딩합니다."""
+    """샘플 훈련과정 데이터를 시딩합니다."""
     fetched = seed_sample_programs(db)
     embedding.reset_tfidf_cache()
     return ProgramRefreshResponse(fetched=fetched, source="sample")

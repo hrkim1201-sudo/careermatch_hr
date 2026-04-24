@@ -10,16 +10,22 @@ class Settings(BaseSettings):
     )
 
     # --- Database ---
-    # Railway는 DATABASE_URL을 자동으로 주입
     database_url: str = (
         "postgresql+psycopg2://careermatch:careermatch@localhost:5432/careermatch"
     )
 
-    # --- OpenAI (선택) ---
+    # --- OpenAI ---
     openai_api_key: str | None = None
     openai_embedding_model: str = "text-embedding-3-small"
     openai_chat_model: str = "gpt-4o-mini"
     openai_request_timeout: float = 15.0
+
+    # --- Work24 (4개 키) ---
+    work24_api_key: str | None = None               # 범용 fallback
+    work24_kdt_api_key: str | None = None           # 국민내일배움카드
+    work24_apprentice_api_key: str | None = None    # 일학습병행
+    work24_capability_api_key: str | None = None    # 구직자취업역량강화
+    work24_request_timeout: float = 15.0
 
     # --- Q-Net ---
     qnet_api_key_encoded: str = (
@@ -40,8 +46,6 @@ class Settings(BaseSettings):
     qnet_request_timeout: float = 15.0
 
     # --- CORS ---
-    # 환경변수로 JSON 배열 문자열을 받음
-    # 예: CORS_ORIGINS=["https://careermatch.vercel.app","http://localhost:5173"]
     cors_origins_str: str = '["http://localhost:5173","http://127.0.0.1:5173"]'
 
     @property
