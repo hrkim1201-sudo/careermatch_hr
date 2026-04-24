@@ -1,11 +1,7 @@
 """Work24 고용24 Open API 클라이언트.
 
 프로그램 유형별로 별도 API 키와 엔드포인트를 사용합니다.
-  - KDT          : 국민내일배움카드 훈련과정
-  - Apprenticeship: 일학습병행훈련과정
-  - Capability   : 구직자취업역량 강화프로그램
-
-API 호출 실패 시 샘플 데이터로 fallback합니다.
+페이지네이션으로 전체 데이터를 모두 수집합니다.
 """
 from __future__ import annotations
 
@@ -21,14 +17,12 @@ from app.services.program_catalog import SAMPLE_PROGRAMS
 
 logger = logging.getLogger(__name__)
 
-# Work24 API 엔드포인트
 _ENDPOINTS = {
     "kdt": "https://www.work24.go.kr/cm/openApi/call/wk/workApiWkKdt.do",
     "apprenticeship": "https://www.work24.go.kr/cm/openApi/call/wk/workApiWkApprenticeship.do",
     "capability": "https://www.work24.go.kr/cm/openApi/call/wk/workApiWkCapability.do",
 }
 
-# 카테고리 레이블
 _CATEGORY_MAP = {
     "kdt": "국민내일배움카드 훈련과정",
     "apprenticeship": "일학습병행훈련과정",
@@ -37,73 +31,44 @@ _CATEGORY_MAP = {
 
 
 def fetch_and_store(db: Session) -> tuple[int, str]:
-    """Work24 API에서 프로그램을 가져와 DB에 저장. (count, source) 반환."""
     settings = get_settings()
     all_programs: list[dict] = []
     any_success = False
 
-    # KDT 훈련과정
-    if settings.work24_kdt_api_key:
-        programs = _fetch_programs(
-            "kdt",
-            settings.work24_kdt_api_key,
-            settings.work24_request_timeout,
-        )
-        if programs:
-            all_programs.extend(programs)
-            any_success = True
-            logger.info("work24 kdt: %d programs fetched", len(programs))
+    fetch_targets = [
+        ("kdt",           settings.work24_kdt_api_key or settings.work24_api_key),
+        ("apprenticeship", settings.work24_apprentice_api_key or settings.work24_api_key),
+        ("capability",    settings.work24_capability_api_key or settings.work24_api_key),
+    ]
 
-    # 일학습병행
-    if settings.work24_apprentice_api_key:
-        programs = _fetch_programs(
-            "apprenticeship",
-            settings.work24_apprentice_api_key,
-            settings.work24_request_timeout,
-        )
+    for prog_type, api_key in fetch_targets:
+        if not api_key:
+            logger.info("work24 [%s]: no api key, skipping", prog_type)
+            continue
+        programs = _fetch_all_pages(prog_type, api_key, settings.work24_request_timeout)
         if programs:
             all_programs.extend(programs)
             any_success = True
-            logger.info("work24 apprenticeship: %d programs fetched", len(programs))
-
-    # 구직자취업역량강화
-    if settings.work24_capability_api_key:
-        programs = _fetch_programs(
-            "capability",
-            settings.work24_capability_api_key,
-            settings.work24_request_timeout,
-        )
-        if programs:
-            all_programs.extend(programs)
-            any_success = True
-            logger.info("work24 capability: %d programs fetched", len(programs))
-
-    # 일반 키 fallback (kdt 엔드포인트에 시도)
-    if not any_success and settings.work24_api_key:
-        programs = _fetch_programs(
-            "kdt",
-            settings.work24_api_key,
-            settings.work24_request_timeout,
-        )
-        if programs:
-            all_programs.extend(programs)
-            any_success = True
+            logger.info("work24 [%s]: %d programs fetched", prog_type, len(programs))
+        else:
+            logger.warning("work24 [%s]: 0 programs returned", prog_type)
 
     if not any_success or not all_programs:
-        logger.warning("work24 all endpoints failed, falling back to sample data")
+        logger.warning("work24: all endpoints returned 0 results, fallback to sample")
         n = program_repo.upsert_many(db, SAMPLE_PROGRAMS)
         return n, "sample"
 
     n = program_repo.upsert_many(db, all_programs)
+    logger.info("work24: total %d programs stored", n)
     return n, "work24"
 
 
-def _fetch_programs(prog_type: str, api_key: str, timeout: float) -> list[dict]:
-    """단일 Work24 엔드포인트에서 프로그램 목록을 가져옵니다."""
+def _fetch_all_pages(prog_type: str, api_key: str, timeout: float) -> list[dict]:
+    """페이지네이션으로 전체 데이터 수집. 페이지 제한 없음."""
     url = _ENDPOINTS.get(prog_type, _ENDPOINTS["kdt"])
     all_items: list[dict] = []
     page = 1
-    page_size = 100
+    page_size = 100  # 한 번에 가져올 최대 건수
 
     try:
         with httpx.Client(timeout=httpx.Timeout(timeout)) as client:
@@ -113,8 +78,9 @@ def _fetch_programs(prog_type: str, api_key: str, timeout: float) -> list[dict]:
                     "returnType": "JSON",
                     "pageSize": page_size,
                     "pageNum": page,
-                    "outType": "1",  # 목록
+                    "outType": "1",
                 }
+                logger.info("work24 [%s] fetching page %d", prog_type, page)
                 resp = client.get(url, params=params)
                 resp.raise_for_status()
 
@@ -122,6 +88,7 @@ def _fetch_programs(prog_type: str, api_key: str, timeout: float) -> list[dict]:
                 items = _extract_items(data)
 
                 if not items:
+                    logger.info("work24 [%s] page %d: empty, done", prog_type, page)
                     break
 
                 normalized = [
@@ -131,33 +98,33 @@ def _fetch_programs(prog_type: str, api_key: str, timeout: float) -> list[dict]:
                 ]
                 normalized = [p for p in normalized if p.get("external_id")]
                 all_items.extend(normalized)
+                logger.info(
+                    "work24 [%s] page %d: %d items (total %d)",
+                    prog_type, page, len(normalized), len(all_items)
+                )
 
-                # 마지막 페이지 체크
+                # 마지막 페이지 확인
                 if len(items) < page_size:
+                    logger.info("work24 [%s]: last page reached at page %d", prog_type, page)
                     break
+
                 page += 1
 
-                # 최대 10페이지 (1000개)
-                if page > 10:
-                    break
-
     except Exception as e:
-        logger.warning("work24 fetch failed [%s]: %s", prog_type, e)
+        logger.warning("work24 [%s] fetch error at page %d: %s", prog_type, page, e)
 
     return all_items
 
 
 def _extract_items(data: Any) -> list[dict]:
-    """Work24 JSON 응답에서 아이템 목록 추출."""
     if not isinstance(data, dict):
         return []
-    # 가능한 응답 구조들
-    for key in ["srchList", "returnUseYn", "contents", "list", "data", "items"]:
+    for key in ["srchList", "returnUseYn", "contents", "list", "data", "items", "result"]:
         val = data.get(key)
         if isinstance(val, list):
             return val
         if isinstance(val, dict):
-            for subkey in ["srchList", "list", "items"]:
+            for subkey in ["srchList", "list", "items", "contents"]:
                 sub = val.get(subkey)
                 if isinstance(sub, list):
                     return sub
@@ -165,11 +132,9 @@ def _extract_items(data: Any) -> list[dict]:
 
 
 def _normalize(raw: dict, prog_type: str) -> dict:
-    """Work24 응답 필드 → 내부 스키마 변환."""
-    # Work24 API 필드명 (실제 응답에 따라 조정 필요)
-    external_id = (
-        str(raw.get("trprId") or raw.get("instCd") or raw.get("courseId") or "").strip()
-    )
+    external_id = str(
+        raw.get("trprId") or raw.get("instCd") or raw.get("courseId") or ""
+    ).strip()
     if not external_id:
         return {}
 
@@ -202,8 +167,8 @@ def _parse_location(raw: dict) -> str | None:
     ]
     loc = " ".join(p for p in parts if p)
     if not loc:
-        online = raw.get("realClassYn") or raw.get("onlineYn") or ""
-        if str(online).upper() in ("Y", "1", "TRUE"):
+        online = str(raw.get("realClassYn") or raw.get("onlineYn") or "")
+        if online.upper() in ("Y", "1", "TRUE"):
             return "온라인"
     return loc or None
 
@@ -213,9 +178,7 @@ def _parse_schedule(raw: dict) -> str | None:
     end = str(raw.get("traEndDate") or raw.get("endDate") or "").strip()
     if start and end:
         return f"{start} ~ {end}"
-    if start:
-        return start
-    return str(raw.get("schedule") or "").strip() or None
+    return start or str(raw.get("schedule") or "").strip() or None
 
 
 def _extract_tags(raw: dict, prog_type: str) -> list[str]:
