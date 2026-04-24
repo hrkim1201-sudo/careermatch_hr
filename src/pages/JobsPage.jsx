@@ -63,7 +63,7 @@ export default function JobsPage() {
         <header className={styles.header}>
           <div>
             <h1 className={styles.title}>채용공고</h1>
-            <p className={styles.subtitle}>Work24 고용24 기반 · 총 <strong>{total}</strong>개</p>
+            <p className={styles.subtitle}>총 <strong>{total}</strong>개 채용공고</p>
           </div>
           <Button onClick={refresh} disabled={loading}>
             {loading ? "갱신 중..." : "실데이터 가져오기"}

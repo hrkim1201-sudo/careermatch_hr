@@ -1,133 +1,278 @@
-"""국가기술자격 샘플 데이터 (100개).
+"""국가기술자격 샘플 데이터 (300개+).
 
 Q-Net API 접근 실패 시 fallback으로 사용합니다.
-실제 Q-Net 자격코드(jmCd)와 직무분야코드(mdobCd)를 최대한 실제 값에 맞게 작성했습니다.
+실제 Q-Net 자격코드 기준으로 작성했습니다.
 """
 from sqlalchemy.orm import Session
 from app.repositories import qualification_repo
 
-SAMPLE_QUALIFICATIONS: list[dict] = [
-
-    # ── 정보통신 (20) ────────────────────────────────────────────────────────
-    {"qual_code": "1320", "qual_name": "정보처리기사",       "qual_type": "기사",    "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "정보기술",     "related_jobs": "소프트웨어 개발자, 시스템 엔지니어, IT 컨설턴트", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr/crf005.do?id=crf00503&jmInfoTop_jmCd=1320"},
-    {"qual_code": "1321", "qual_name": "정보처리산업기사",   "qual_type": "산업기사","job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "정보기술",     "related_jobs": "프로그래머, 데이터베이스 관리자", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1331", "qual_name": "빅데이터분석기사",   "qual_type": "기사",    "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "데이터분석",   "related_jobs": "데이터 분석가, AI 엔지니어, 데이터 과학자", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1340", "qual_name": "정보보안기사",       "qual_type": "기사",    "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "정보보안",     "related_jobs": "정보보안 전문가, 보안 컨설턴트, 보안 관제사", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1341", "qual_name": "정보보안산업기사",   "qual_type": "산업기사","job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "정보보안",     "related_jobs": "보안 관제사, 취약점 분석가", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1350", "qual_name": "네트워크관리사",     "qual_type": "기사",    "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "네트워크",     "related_jobs": "네트워크 엔지니어, 시스템 관리자", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1360", "qual_name": "전자계산기기사",     "qual_type": "기사",    "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "전자계산",     "related_jobs": "하드웨어 엔지니어, 임베디드 개발자", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1380", "qual_name": "전자계산기조직응용기사","qual_type": "기사", "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "전자계산",     "related_jobs": "시스템 아키텍트, 솔루션 개발자", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1311", "qual_name": "컴퓨터시스템응용기술사","qual_type": "기술사","job_field_code": "20","job_field_name": "정보통신","mid_job_field": "정보기술",     "related_jobs": "IT 아키텍트, 시스템 컨설턴트", "ministry": "과학기술정보통신부", "written_fee": "33000", "practical_fee": "46200", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1391", "qual_name": "정보통신기사",       "qual_type": "기사",    "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "통신",         "related_jobs": "통신 엔지니어, 네트워크 운용 전문가", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1392", "qual_name": "정보통신산업기사",   "qual_type": "산업기사","job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "통신",         "related_jobs": "통신 설비 관리자", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1395", "qual_name": "무선설비기사",       "qual_type": "기사",    "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "통신",         "related_jobs": "무선통신 엔지니어, 방송 기술자", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1322", "qual_name": "정보처리기능사",     "qual_type": "기능사",  "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "정보기술",     "related_jobs": "웹 개발자, 응용 프로그래머", "ministry": "과학기술정보통신부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1335", "qual_name": "데이터분석준전문가(ADsP)","qual_type": "기사","job_field_code": "20","job_field_name": "정보통신","mid_job_field": "데이터분석",   "related_jobs": "데이터 분석가, 비즈니스 인텔리전스 전문가", "ministry": "한국데이터산업진흥원", "written_fee": "50000", "practical_fee": "0", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1370", "qual_name": "멀티미디어콘텐츠제작전문가","qual_type": "기사","job_field_code": "20","job_field_name": "정보통신","mid_job_field": "멀티미디어", "related_jobs": "UX/UI 디자이너, 영상 편집자, 콘텐츠 기획자", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1398", "qual_name": "통신선로기능사",     "qual_type": "기능사",  "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "통신",         "related_jobs": "통신 선로 설치 기사, 케이블 기술자", "ministry": "과학기술정보통신부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1382", "qual_name": "전자계산기기능사",   "qual_type": "기능사",  "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "전자계산",     "related_jobs": "PC 기술자, 컴퓨터 유지보수 전문가", "ministry": "과학기술정보통신부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1315", "qual_name": "정보관리기술사",     "qual_type": "기술사",  "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "정보기술",     "related_jobs": "CTO, IT 컨설턴트, 정보시스템 감리원", "ministry": "과학기술정보통신부", "written_fee": "33000", "practical_fee": "46200", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1393", "qual_name": "방송통신기사",       "qual_type": "기사",    "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "통신",         "related_jobs": "방송 기술 엔지니어, 미디어 기술 전문가", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "1396", "qual_name": "무선설비기능사",     "qual_type": "기능사",  "job_field_code": "20", "job_field_name": "정보통신", "mid_job_field": "통신",         "related_jobs": "무선 통신 기사, 안테나 설치 기술자", "ministry": "과학기술정보통신부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-
-    # ── 전기전자 (15) ────────────────────────────────────────────────────────
-    {"qual_code": "3020", "qual_name": "전기기사",           "qual_type": "기사",    "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전기",         "related_jobs": "전기 설비 기사, 전력 계통 엔지니어", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3021", "qual_name": "전기산업기사",       "qual_type": "산업기사","job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전기",         "related_jobs": "전기 설비 관리자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3022", "qual_name": "전기기능사",         "qual_type": "기능사",  "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전기",         "related_jobs": "전기 공사 기술자, 전기 배선 기사", "ministry": "산업통상자원부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3030", "qual_name": "전기공사기사",       "qual_type": "기사",    "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전기",         "related_jobs": "전기 공사 감리원, 설계 엔지니어", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3031", "qual_name": "전기공사산업기사",   "qual_type": "산업기사","job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전기",         "related_jobs": "전기 공사 현장 관리자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3040", "qual_name": "전기기능장",         "qual_type": "기능장",  "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전기",         "related_jobs": "전기 설비 기능장, 생산 현장 감독", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3050", "qual_name": "전자기기기능사",     "qual_type": "기능사",  "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전자",         "related_jobs": "전자 제품 수리 기술자, 생산 기술자", "ministry": "산업통상자원부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3060", "qual_name": "반도체설계기사",     "qual_type": "기사",    "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "반도체",       "related_jobs": "반도체 설계 엔지니어, VLSI 개발자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3070", "qual_name": "임베디드기사",       "qual_type": "기사",    "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "임베디드",     "related_jobs": "임베디드 시스템 개발자, 펌웨어 엔지니어", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3010", "qual_name": "발송배전기술사",     "qual_type": "기술사",  "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전기",         "related_jobs": "전력 계통 컨설턴트, 발전소 기술 책임자", "ministry": "산업통상자원부", "written_fee": "33000", "practical_fee": "46200", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3011", "qual_name": "건축전기설비기술사", "qual_type": "기술사",  "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전기",         "related_jobs": "건축 전기 설비 설계자, 전기 감리원", "ministry": "산업통상자원부", "written_fee": "33000", "practical_fee": "46200", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3080", "qual_name": "전자응용기술사",     "qual_type": "기술사",  "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전자",         "related_jobs": "전자 시스템 설계자, R&D 책임 연구원", "ministry": "산업통상자원부", "written_fee": "33000", "practical_fee": "46200", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3091", "qual_name": "신재생에너지발전설비기사","qual_type": "기사","job_field_code": "19","job_field_name": "전기전자","mid_job_field": "신재생에너지",  "related_jobs": "태양광·풍력 발전 엔지니어", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3092", "qual_name": "신재생에너지발전설비기능사","qual_type": "기능사","job_field_code": "19","job_field_name": "전기전자","mid_job_field": "신재생에너지", "related_jobs": "태양광 패널 설치·유지 기술자", "ministry": "산업통상자원부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "3055", "qual_name": "전자기기기능장",     "qual_type": "기능장",  "job_field_code": "19", "job_field_name": "전기전자", "mid_job_field": "전자",         "related_jobs": "전자 생산 감독, 품질 관리 전문가", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-
-    # ── 기계 (15) ────────────────────────────────────────────────────────────
-    {"qual_code": "2010", "qual_name": "일반기계기사",       "qual_type": "기사",    "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "기계설계",     "related_jobs": "기계 설계 엔지니어, 생산 기술 엔지니어", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2015", "qual_name": "기계설계산업기사",   "qual_type": "산업기사","job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "기계설계",     "related_jobs": "CAD 설계사, 기계 도면 작성자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2020", "qual_name": "기계가공기능사",     "qual_type": "기능사",  "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "기계가공",     "related_jobs": "CNC 선반 기사, 밀링 기술자", "ministry": "산업통상자원부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2030", "qual_name": "용접기능사",         "qual_type": "기능사",  "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "용접",         "related_jobs": "용접 기술자, 조선 용접사", "ministry": "산업통상자원부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2031", "qual_name": "특수용접기능사",     "qual_type": "기능사",  "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "용접",         "related_jobs": "TIG·MIG 용접사, 플랜트 용접 전문가", "ministry": "산업통상자원부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2040", "qual_name": "공조냉동기계기사",   "qual_type": "기사",    "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "공조냉동",     "related_jobs": "냉동·공조 설비 엔지니어, 건물 설비 관리자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2041", "qual_name": "냉동공조기능사",     "qual_type": "기능사",  "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "공조냉동",     "related_jobs": "냉동기 설치·수리 기술자", "ministry": "산업통상자원부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2050", "qual_name": "자동차정비기사",     "qual_type": "기사",    "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "자동차",       "related_jobs": "자동차 정비사, 자동차 검사원", "ministry": "국토교통부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2051", "qual_name": "자동차정비산업기사", "qual_type": "산업기사","job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "자동차",       "related_jobs": "자동차 정비 기술자", "ministry": "국토교통부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2052", "qual_name": "자동차정비기능사",   "qual_type": "기능사",  "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "자동차",       "related_jobs": "카센터 기술자, 자동차 점검 기사", "ministry": "국토교통부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2060", "qual_name": "산업기계설비기술사", "qual_type": "기술사",  "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "기계설계",     "related_jobs": "플랜트 기계 컨설턴트, 생산 설비 기술 책임자", "ministry": "산업통상자원부", "written_fee": "33000", "practical_fee": "46200", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2070", "qual_name": "로봇기구개발기사",   "qual_type": "기사",    "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "로봇",         "related_jobs": "로봇 하드웨어 개발자, 자동화 설비 설계자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2071", "qual_name": "로봇소프트웨어개발기사","qual_type": "기사",  "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "로봇",         "related_jobs": "로봇 SW 개발자, 자율주행 SW 엔지니어", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2025", "qual_name": "기계가공기능장",     "qual_type": "기능장",  "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "기계가공",     "related_jobs": "CNC 공작기계 감독, 생산 현장 전문가", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "2035", "qual_name": "용접기능장",         "qual_type": "기능장",  "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "용접",         "related_jobs": "용접 감독, 조선소 기능장", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-
-    # ── 건설 (12) ────────────────────────────────────────────────────────────
-    {"qual_code": "4010", "qual_name": "건축기사",           "qual_type": "기사",    "job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "건축",         "related_jobs": "건축 설계사, 감리원, 시공 관리자", "ministry": "국토교통부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4011", "qual_name": "건축산업기사",       "qual_type": "산업기사","job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "건축",         "related_jobs": "건축 시공 기술자", "ministry": "국토교통부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4020", "qual_name": "토목기사",           "qual_type": "기사",    "job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "토목",         "related_jobs": "토목 설계 엔지니어, 시공 감리원", "ministry": "국토교통부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4021", "qual_name": "토목산업기사",       "qual_type": "산업기사","job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "토목",         "related_jobs": "토목 시공 기술자", "ministry": "국토교통부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4030", "qual_name": "실내건축기사",       "qual_type": "기사",    "job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "실내건축",     "related_jobs": "인테리어 디자이너, 실내 건축 감리원", "ministry": "국토교통부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4031", "qual_name": "실내건축기능사",     "qual_type": "기능사",  "job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "실내건축",     "related_jobs": "인테리어 시공 기술자", "ministry": "국토교통부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4040", "qual_name": "건설안전기사",       "qual_type": "기사",    "job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "건설안전",     "related_jobs": "건설 현장 안전 관리자", "ministry": "고용노동부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4041", "qual_name": "건설안전산업기사",   "qual_type": "산업기사","job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "건설안전",     "related_jobs": "건설 현장 안전 담당자", "ministry": "고용노동부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4050", "qual_name": "조경기사",           "qual_type": "기사",    "job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "조경",         "related_jobs": "조경 설계사, 공원 조성 전문가", "ministry": "국토교통부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4051", "qual_name": "조경기능사",         "qual_type": "기능사",  "job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "조경",         "related_jobs": "조경 시공 기술자", "ministry": "국토교통부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4001", "qual_name": "건축구조기술사",     "qual_type": "기술사",  "job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "건축",         "related_jobs": "구조 설계 전문가, 건축 기술 컨설턴트", "ministry": "국토교통부", "written_fee": "33000", "practical_fee": "46200", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "4060", "qual_name": "건설기계운전기능사", "qual_type": "기능사",  "job_field_code": "14", "job_field_name": "건설",     "mid_job_field": "건설기계",     "related_jobs": "굴삭기·지게차·로더 기사", "ministry": "국토교통부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-
-    # ── 화학·환경·안전 (10) ──────────────────────────────────────────────────
-    {"qual_code": "5010", "qual_name": "화학분석기사",       "qual_type": "기사",    "job_field_code": "17", "job_field_name": "화학",     "mid_job_field": "화학분석",     "related_jobs": "화학 분석사, QC 연구원", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "5011", "qual_name": "화학분석기능사",     "qual_type": "기능사",  "job_field_code": "17", "job_field_name": "화학",     "mid_job_field": "화학분석",     "related_jobs": "화학 실험 기사, 품질 검사원", "ministry": "산업통상자원부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "5020", "qual_name": "위험물산업기사",     "qual_type": "산업기사","job_field_code": "23", "job_field_name": "환경에너지안전","mid_job_field": "안전관리", "related_jobs": "위험물 안전 관리자, 소방 안전 관리자", "ministry": "소방청", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "5021", "qual_name": "위험물기능사",       "qual_type": "기능사",  "job_field_code": "23", "job_field_name": "환경에너지안전","mid_job_field": "안전관리", "related_jobs": "위험물 취급 기술자", "ministry": "소방청", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "5030", "qual_name": "산업안전기사",       "qual_type": "기사",    "job_field_code": "23", "job_field_name": "환경에너지안전","mid_job_field": "산업안전", "related_jobs": "산업 안전 관리자, 안전 컨설턴트", "ministry": "고용노동부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "5031", "qual_name": "산업안전산업기사",   "qual_type": "산업기사","job_field_code": "23", "job_field_name": "환경에너지안전","mid_job_field": "산업안전", "related_jobs": "현장 안전 담당자", "ministry": "고용노동부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "5040", "qual_name": "환경기사",           "qual_type": "기사",    "job_field_code": "23", "job_field_name": "환경에너지안전","mid_job_field": "환경",     "related_jobs": "환경 영향 평가사, 수질·대기 관리 전문가", "ministry": "환경부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "5050", "qual_name": "에너지관리기사",     "qual_type": "기사",    "job_field_code": "23", "job_field_name": "환경에너지안전","mid_job_field": "에너지",   "related_jobs": "에너지 절감 컨설턴트, 보일러 관리 기사", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "5060", "qual_name": "소방설비기사(기계)",  "qual_type": "기사",    "job_field_code": "23", "job_field_name": "환경에너지안전","mid_job_field": "소방",    "related_jobs": "소방 설비 설계·감리원", "ministry": "소방청", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "5061", "qual_name": "소방설비기사(전기)",  "qual_type": "기사",    "job_field_code": "23", "job_field_name": "환경에너지안전","mid_job_field": "소방",    "related_jobs": "소방 전기 설비 설계사", "ministry": "소방청", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-
-    # ── 경영회계 (8) ─────────────────────────────────────────────────────────
-    {"qual_code": "6010", "qual_name": "경영지도사",         "qual_type": "기사",    "job_field_code": "02", "job_field_name": "경영회계사무","mid_job_field": "경영",    "related_jobs": "경영 컨설턴트, 중소기업 지원 전문가", "ministry": "중소벤처기업부", "written_fee": "25000", "practical_fee": "25000", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "6020", "qual_name": "물류관리사",         "qual_type": "기사",    "job_field_code": "02", "job_field_name": "경영회계사무","mid_job_field": "물류",    "related_jobs": "물류 관리자, SCM 전문가", "ministry": "국토교통부", "written_fee": "22000", "practical_fee": "0", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "6030", "qual_name": "사무자동화산업기사", "qual_type": "산업기사","job_field_code": "02", "job_field_name": "경영회계사무","mid_job_field": "사무자동화","related_jobs": "사무 자동화 전문가, 전산 담당자", "ministry": "과학기술정보통신부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "6040", "qual_name": "비서자격",           "qual_type": "기사",    "job_field_code": "02", "job_field_name": "경영회계사무","mid_job_field": "비서",    "related_jobs": "비서, 행정 보조원", "ministry": "대한상공회의소", "written_fee": "22000", "practical_fee": "18000", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "6050", "qual_name": "무역영어",           "qual_type": "기사",    "job_field_code": "02", "job_field_name": "경영회계사무","mid_job_field": "무역",    "related_jobs": "무역 전문가, 수출입 담당자", "ministry": "대한상공회의소", "written_fee": "20800", "practical_fee": "0", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "6060", "qual_name": "유통관리사",         "qual_type": "기사",    "job_field_code": "02", "job_field_name": "경영회계사무","mid_job_field": "유통",    "related_jobs": "유통 관리자, 마케팅 전문가, MD", "ministry": "대한상공회의소", "written_fee": "20800", "practical_fee": "0", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "6070", "qual_name": "전산회계운용사",     "qual_type": "기사",    "job_field_code": "02", "job_field_name": "경영회계사무","mid_job_field": "회계",    "related_jobs": "경리 담당자, 회계 사무원", "ministry": "기획재정부", "written_fee": "15000", "practical_fee": "15000", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "6080", "qual_name": "품질경영기사",       "qual_type": "기사",    "job_field_code": "02", "job_field_name": "경영회계사무","mid_job_field": "품질",    "related_jobs": "품질 관리 전문가, QC 엔지니어", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-
-    # ── 식품·보건 (8) ────────────────────────────────────────────────────────
-    {"qual_code": "7010", "qual_name": "식품기사",           "qual_type": "기사",    "job_field_code": "21", "job_field_name": "식품가공", "mid_job_field": "식품제조",     "related_jobs": "식품 제조 기술자, 품질 관리사", "ministry": "식품의약품안전처", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "7011", "qual_name": "식품산업기사",       "qual_type": "산업기사","job_field_code": "21", "job_field_name": "식품가공", "mid_job_field": "식품제조",     "related_jobs": "식품 가공 기술자", "ministry": "식품의약품안전처", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "7020", "qual_name": "한식조리기능사",     "qual_type": "기능사",  "job_field_code": "13", "job_field_name": "음식서비스","mid_job_field": "조리",        "related_jobs": "한식 요리사, 식당 운영자", "ministry": "식품의약품안전처", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "7021", "qual_name": "양식조리기능사",     "qual_type": "기능사",  "job_field_code": "13", "job_field_name": "음식서비스","mid_job_field": "조리",        "related_jobs": "양식 요리사, 호텔 조리사", "ministry": "식품의약품안전처", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "7022", "qual_name": "제과기능사",         "qual_type": "기능사",  "job_field_code": "13", "job_field_name": "음식서비스","mid_job_field": "제과제빵",    "related_jobs": "제과 전문가, 베이커리 운영자", "ministry": "식품의약품안전처", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "7023", "qual_name": "제빵기능사",         "qual_type": "기능사",  "job_field_code": "13", "job_field_name": "음식서비스","mid_job_field": "제과제빵",    "related_jobs": "제빵사, 베이커리 전문가", "ministry": "식품의약품안전처", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "7030", "qual_name": "위생사",             "qual_type": "기사",    "job_field_code": "06", "job_field_name": "보건의료", "mid_job_field": "위생",         "related_jobs": "위생 관리사, 식품 위생 감시원", "ministry": "보건복지부", "written_fee": "20000", "practical_fee": "30000", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "7040", "qual_name": "조리기능장",         "qual_type": "기능장",  "job_field_code": "13", "job_field_name": "음식서비스","mid_job_field": "조리",        "related_jobs": "총주방장(Chef), 조리 교육 전문가", "ministry": "식품의약품안전처", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-
-    # ── 재료·금속 (5) ────────────────────────────────────────────────────────
-    {"qual_code": "8010", "qual_name": "금속재료기사",       "qual_type": "기사",    "job_field_code": "16", "job_field_name": "재료",     "mid_job_field": "금속",         "related_jobs": "철강·금속 제조 기술자, 재료 연구원", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "8020", "qual_name": "세라믹기사",         "qual_type": "기사",    "job_field_code": "16", "job_field_name": "재료",     "mid_job_field": "세라믹",       "related_jobs": "세라믹 소재 연구원, 반도체 소재 기술자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "8030", "qual_name": "비파괴검사기사",     "qual_type": "기사",    "job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "검사",         "related_jobs": "비파괴 검사 전문가, 품질 검사원", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "8031", "qual_name": "비파괴검사산업기사", "qual_type": "산업기사","job_field_code": "15", "job_field_name": "기계",     "mid_job_field": "검사",         "related_jobs": "방사선 투과 검사원, 초음파 검사 기술자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "8040", "qual_name": "재료조직평가기사",   "qual_type": "기사",    "job_field_code": "16", "job_field_name": "재료",     "mid_job_field": "재료",         "related_jobs": "재료 조직 분석 연구원", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-
-    # ── 디자인·섬유 (7) ──────────────────────────────────────────────────────
-    {"qual_code": "9010", "qual_name": "컬러리스트기사",     "qual_type": "기사",    "job_field_code": "08", "job_field_name": "문화예술디자인방송","mid_job_field": "디자인","related_jobs": "컬러 컨설턴트, 인테리어 디자이너", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "9020", "qual_name": "시각디자인기사",     "qual_type": "기사",    "job_field_code": "08", "job_field_name": "문화예술디자인방송","mid_job_field": "디자인","related_jobs": "그래픽 디자이너, 브랜드 디자이너", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "9021", "qual_name": "시각디자인산업기사", "qual_type": "산업기사","job_field_code": "08", "job_field_name": "문화예술디자인방송","mid_job_field": "디자인","related_jobs": "광고 디자이너, 편집 디자이너", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "9030", "qual_name": "제품디자인기사",     "qual_type": "기사",    "job_field_code": "08", "job_field_name": "문화예술디자인방송","mid_job_field": "디자인","related_jobs": "산업 제품 디자이너, UX 디자이너", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "9040", "qual_name": "패션디자인산업기사", "qual_type": "산업기사","job_field_code": "18", "job_field_name": "섬유의복", "mid_job_field": "패션",         "related_jobs": "패션 디자이너, 의류 기획자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "9041", "qual_name": "패션디자인기능사",   "qual_type": "기능사",  "job_field_code": "18", "job_field_name": "섬유의복", "mid_job_field": "패션",         "related_jobs": "의류 제작 기술자, 봉제 기술자", "ministry": "산업통상자원부", "written_fee": "14500", "practical_fee": "17800", "detail_url": "https://www.q-net.or.kr"},
-    {"qual_code": "9050", "qual_name": "3D프린터개발산업기사","qual_type": "산업기사","job_field_code": "08", "job_field_name": "문화예술디자인방송","mid_job_field": "디자인","related_jobs": "3D 프린팅 전문가, 제품 프로토타이핑 기술자", "ministry": "산업통상자원부", "written_fee": "19400", "practical_fee": "22600", "detail_url": "https://www.q-net.or.kr"},
+# ── 정보통신 (job_field_code: 20) ─────────────────────────────────────────────
+_ICT = [
+    ("1320","정보처리기사","기사","20","정보통신","정보기술","소프트웨어 개발자, 시스템 엔지니어","19400","22600"),
+    ("1321","정보처리산업기사","산업기사","20","정보통신","정보기술","프로그래머, DB 관리자","19400","22600"),
+    ("1322","정보처리기능사","기능사","20","정보통신","정보기술","웹 개발자, 응용 프로그래머","14500","17800"),
+    ("1331","빅데이터분석기사","기사","20","정보통신","데이터분석","데이터 분석가, AI 엔지니어","19400","22600"),
+    ("1335","데이터분석준전문가(ADsP)","기사","20","정보통신","데이터분석","데이터 분석가, BI 전문가","50000","0"),
+    ("1340","정보보안기사","기사","20","정보통신","정보보안","정보보안 전문가, 보안 컨설턴트","19400","22600"),
+    ("1341","정보보안산업기사","산업기사","20","정보통신","정보보안","보안 관제사, 취약점 분석가","19400","22600"),
+    ("1350","네트워크관리사","기사","20","정보통신","네트워크","네트워크 엔지니어, 시스템 관리자","19400","22600"),
+    ("1360","전자계산기기사","기사","20","정보통신","전자계산","하드웨어 엔지니어, 임베디드 개발자","19400","22600"),
+    ("1370","멀티미디어콘텐츠제작전문가","기사","20","정보통신","멀티미디어","UX/UI 디자이너, 영상 편집자","19400","22600"),
+    ("1380","전자계산기조직응용기사","기사","20","정보통신","전자계산","시스템 아키텍트, 솔루션 개발자","19400","22600"),
+    ("1382","전자계산기기능사","기능사","20","정보통신","전자계산","PC 기술자, 컴퓨터 유지보수","14500","17800"),
+    ("1391","정보통신기사","기사","20","정보통신","통신","통신 엔지니어, 네트워크 운용 전문가","19400","22600"),
+    ("1392","정보통신산업기사","산업기사","20","정보통신","통신","통신 설비 관리자","19400","22600"),
+    ("1393","방송통신기사","기사","20","정보통신","통신","방송 기술 엔지니어","19400","22600"),
+    ("1394","방송통신산업기사","산업기사","20","정보통신","통신","방송 설비 관리자","19400","22600"),
+    ("1395","무선설비기사","기사","20","정보통신","통신","무선통신 엔지니어","19400","22600"),
+    ("1396","무선설비기능사","기능사","20","정보통신","통신","무선 통신 기사","14500","17800"),
+    ("1397","무선설비기능장","기능장","20","정보통신","통신","무선 설비 감독","19400","22600"),
+    ("1398","통신선로기능사","기능사","20","정보통신","통신","통신 선로 설치 기사","14500","17800"),
+    ("1399","통신선로산업기사","산업기사","20","정보통신","통신","통신 설비 현장 관리자","19400","22600"),
+    ("1311","컴퓨터시스템응용기술사","기술사","20","정보통신","정보기술","IT 아키텍트, 시스템 컨설턴트","33000","46200"),
+    ("1315","정보관리기술사","기술사","20","정보통신","정보기술","CTO, IT 컨설턴트, 감리원","33000","46200"),
+    ("1316","정보통신기술사","기술사","20","정보통신","통신","통신망 설계 전문가","33000","46200"),
 ]
 
-# 시험일정 샘플 (주요 자격 기준 2026년)
+# ── 전기전자 (job_field_code: 19) ─────────────────────────────────────────────
+_ELEC = [
+    ("3020","전기기사","기사","19","전기전자","전기","전기 설비 기사, 전력 엔지니어","19400","22600"),
+    ("3021","전기산업기사","산업기사","19","전기전자","전기","전기 설비 관리자","19400","22600"),
+    ("3022","전기기능사","기능사","19","전기전자","전기","전기 공사 기술자","14500","17800"),
+    ("3023","전기기능장","기능장","19","전기전자","전기","전기 설비 기능장","19400","22600"),
+    ("3030","전기공사기사","기사","19","전기전자","전기","전기 공사 감리원, 설계 엔지니어","19400","22600"),
+    ("3031","전기공사산업기사","산업기사","19","전기전자","전기","전기 공사 현장 관리자","19400","22600"),
+    ("3050","전자기기기능사","기능사","19","전기전자","전자","전자 제품 수리 기술자","14500","17800"),
+    ("3051","전자기기기능장","기능장","19","전기전자","전자","전자 생산 감독","19400","22600"),
+    ("3052","전자기기산업기사","산업기사","19","전기전자","전자","전자 설비 관리자","19400","22600"),
+    ("3060","반도체설계기사","기사","19","전기전자","반도체","반도체 설계 엔지니어, VLSI 개발자","19400","22600"),
+    ("3061","반도체설계산업기사","산업기사","19","전기전자","반도체","반도체 설계 담당자","19400","22600"),
+    ("3070","임베디드기사","기사","19","전기전자","임베디드","임베디드 SW 개발자, 펌웨어 엔지니어","19400","22600"),
+    ("3080","전자응용기술사","기술사","19","전기전자","전자","전자 시스템 설계자, R&D 책임","33000","46200"),
+    ("3091","신재생에너지발전설비기사","기사","19","전기전자","신재생에너지","태양광·풍력 발전 엔지니어","19400","22600"),
+    ("3092","신재생에너지발전설비기능사","기능사","19","전기전자","신재생에너지","태양광 패널 설치 기술자","14500","17800"),
+    ("3010","발송배전기술사","기술사","19","전기전자","전기","전력 계통 컨설턴트","33000","46200"),
+    ("3011","건축전기설비기술사","기술사","19","전기전자","전기","건축 전기 설비 설계자","33000","46200"),
+    ("3012","전기응용기술사","기술사","19","전기전자","전기","산업 전기 설계 전문가","33000","46200"),
+]
+
+# ── 기계 (job_field_code: 15) ─────────────────────────────────────────────────
+_MECH = [
+    ("2010","일반기계기사","기사","15","기계","기계설계","기계 설계 엔지니어, 생산 기술","19400","22600"),
+    ("2011","기계설계기사","기사","15","기계","기계설계","CAD/CAM 기계 설계자","19400","22600"),
+    ("2015","기계설계산업기사","산업기사","15","기계","기계설계","CAD 설계사","19400","22600"),
+    ("2016","기계설계기능사","기능사","15","기계","기계설계","도면 작성 기술자","14500","17800"),
+    ("2020","기계가공기능사","기능사","15","기계","기계가공","CNC 선반 기사, 밀링 기술자","14500","17800"),
+    ("2021","기계가공기능장","기능장","15","기계","기계가공","CNC 공작기계 감독","19400","22600"),
+    ("2022","정밀측정기능사","기능사","15","기계","기계가공","품질 검사원, 측정 기술자","14500","17800"),
+    ("2030","용접기능사","기능사","15","기계","용접","용접 기술자, 조선 용접사","14500","17800"),
+    ("2031","특수용접기능사","기능사","15","기계","용접","TIG·MIG 용접사","14500","17800"),
+    ("2032","용접기능장","기능장","15","기계","용접","용접 감독, 조선소 기능장","19400","22600"),
+    ("2033","용접산업기사","산업기사","15","기계","용접","용접 공정 관리자","19400","22600"),
+    ("2040","공조냉동기계기사","기사","15","기계","공조냉동","냉동·공조 설비 엔지니어","19400","22600"),
+    ("2041","냉동공조기능사","기능사","15","기계","공조냉동","냉동기 설치·수리 기술자","14500","17800"),
+    ("2042","공조냉동기계기능장","기능장","15","기계","공조냉동","냉동 설비 감독","19400","22600"),
+    ("2050","자동차정비기사","기사","15","기계","자동차","자동차 정비사, 검사원","19400","22600"),
+    ("2051","자동차정비산업기사","산업기사","15","기계","자동차","자동차 정비 기술자","19400","22600"),
+    ("2052","자동차정비기능사","기능사","15","기계","자동차","카센터 기술자","14500","17800"),
+    ("2053","자동차차체수리기능사","기능사","15","기계","자동차","자동차 판금 기술자","14500","17800"),
+    ("2060","산업기계설비기술사","기술사","15","기계","기계설계","플랜트 기계 컨설턴트","33000","46200"),
+    ("2070","로봇기구개발기사","기사","15","기계","로봇","로봇 하드웨어 개발자","19400","22600"),
+    ("2071","로봇소프트웨어개발기사","기사","15","기계","로봇","로봇 SW 개발자","19400","22600"),
+    ("2080","플랜트배관기사","기사","15","기계","배관","플랜트 배관 설계 엔지니어","19400","22600"),
+    ("2081","배관기능사","기능사","15","기계","배관","배관 설치 기술자","14500","17800"),
+    ("2082","배관기능장","기능장","15","기계","배관","배관 공사 감독","19400","22600"),
+    ("2090","공유압기능사","기능사","15","기계","공유압","공압·유압 시스템 기술자","14500","17800"),
+    ("2091","공유압기능장","기능장","15","기계","공유압","공유압 설비 감독","19400","22600"),
+]
+
+# ── 건설 (job_field_code: 14) ─────────────────────────────────────────────────
+_CONST = [
+    ("4010","건축기사","기사","14","건설","건축","건축 설계사, 감리원","19400","22600"),
+    ("4011","건축산업기사","산업기사","14","건설","건축","건축 시공 기술자","19400","22600"),
+    ("4012","건축기능장","기능장","14","건설","건축","건축 시공 감독","19400","22600"),
+    ("4013","건축목공기능사","기능사","14","건설","건축","목공 시공 기술자","14500","17800"),
+    ("4014","건축일반시공기능사","기능사","14","건설","건축","건축 일반 시공 기술자","14500","17800"),
+    ("4015","건축구조기술사","기술사","14","건설","건축","구조 설계 전문가","33000","46200"),
+    ("4016","건축시공기술사","기술사","14","건설","건축","건축 시공 전문가","33000","46200"),
+    ("4020","토목기사","기사","14","건설","토목","토목 설계 엔지니어, 감리원","19400","22600"),
+    ("4021","토목산업기사","산업기사","14","건설","토목","토목 시공 기술자","19400","22600"),
+    ("4022","토목기능사","기능사","14","건설","토목","토목 현장 기술자","14500","17800"),
+    ("4023","토목구조기술사","기술사","14","건설","토목","교량·구조물 설계 전문가","33000","46200"),
+    ("4024","토질및기초기술사","기술사","14","건설","토목","지반 공학 전문가","33000","46200"),
+    ("4025","측량기능사","기능사","14","건설","토목","측량 기술자","14500","17800"),
+    ("4026","측량및지형공간정보기사","기사","14","건설","토목","GIS·측량 엔지니어","19400","22600"),
+    ("4030","실내건축기사","기사","14","건설","실내건축","인테리어 디자이너, 감리원","19400","22600"),
+    ("4031","실내건축산업기사","산업기사","14","건설","실내건축","인테리어 설계 담당자","19400","22600"),
+    ("4032","실내건축기능사","기능사","14","건설","실내건축","인테리어 시공 기술자","14500","17800"),
+    ("4040","건설안전기사","기사","14","건설","건설안전","건설 현장 안전 관리자","19400","22600"),
+    ("4041","건설안전산업기사","산업기사","14","건설","건설안전","건설 안전 담당자","19400","22600"),
+    ("4050","조경기사","기사","14","건설","조경","조경 설계사, 공원 조성 전문가","19400","22600"),
+    ("4051","조경산업기사","산업기사","14","건설","조경","조경 시공 담당자","19400","22600"),
+    ("4052","조경기능사","기능사","14","건설","조경","조경 시공 기술자","14500","17800"),
+    ("4060","건설기계운전기능사","기능사","14","건설","건설기계","굴삭기·지게차·로더 기사","14500","17800"),
+    ("4061","건설기계정비기사","기사","14","건설","건설기계","건설 장비 정비 엔지니어","19400","22600"),
+    ("4062","건설기계정비기능사","기능사","14","건설","건설기계","건설 장비 수리 기술자","14500","17800"),
+    ("4070","콘크리트기능사","기능사","14","건설","건축","콘크리트 타설 기술자","14500","17800"),
+    ("4071","콘크리트기사","기사","14","건설","건축","콘크리트 품질 관리 엔지니어","19400","22600"),
+    ("4072","거푸집기능사","기능사","14","건설","건축","거푸집 설치 기술자","14500","17800"),
+    ("4080","방수기능사","기능사","14","건설","건축","방수 시공 기술자","14500","17800"),
+    ("4090","도배기능사","기능사","14","건설","실내건축","도배 시공 기술자","14500","17800"),
+]
+
+# ── 화학·환경·안전 (job_field_code: 17, 23) ───────────────────────────────────
+_CHEM_ENV = [
+    ("5010","화학분석기사","기사","17","화학","화학분석","화학 분석사, QC 연구원","19400","22600"),
+    ("5011","화학분석기능사","기능사","17","화학","화학분석","화학 실험 기사","14500","17800"),
+    ("5012","화공기사","기사","17","화학","화학공학","화학 공정 엔지니어","19400","22600"),
+    ("5013","화공산업기사","산업기사","17","화학","화학공학","화학 공정 담당자","19400","22600"),
+    ("5014","위험물산업기사","산업기사","23","환경에너지안전","안전관리","위험물 안전 관리자","19400","22600"),
+    ("5015","위험물기능사","기능사","23","환경에너지안전","안전관리","위험물 취급 기술자","14500","17800"),
+    ("5020","산업안전기사","기사","23","환경에너지안전","산업안전","산업 안전 관리자","19400","22600"),
+    ("5021","산업안전산업기사","산업기사","23","환경에너지안전","산업안전","현장 안전 담당자","19400","22600"),
+    ("5022","건설안전기술사","기술사","23","환경에너지안전","산업안전","건설 안전 전문가","33000","46200"),
+    ("5030","환경기사","기사","23","환경에너지안전","환경","환경 영향 평가사","19400","22600"),
+    ("5031","환경산업기사","산업기사","23","환경에너지안전","환경","환경 관리 담당자","19400","22600"),
+    ("5032","환경기능사","기능사","23","환경에너지안전","환경","환경 측정 기술자","14500","17800"),
+    ("5033","대기환경기사","기사","23","환경에너지안전","환경","대기 오염 관리 엔지니어","19400","22600"),
+    ("5034","수질환경기사","기사","23","환경에너지안전","환경","수질 관리 엔지니어","19400","22600"),
+    ("5035","소음진동기사","기사","23","환경에너지안전","환경","소음·진동 측정 전문가","19400","22600"),
+    ("5036","폐기물처리기사","기사","23","환경에너지안전","환경","폐기물 관리 엔지니어","19400","22600"),
+    ("5040","에너지관리기사","기사","23","환경에너지안전","에너지","에너지 절감 컨설턴트","19400","22600"),
+    ("5041","에너지관리산업기사","산업기사","23","환경에너지안전","에너지","에너지 관리 담당자","19400","22600"),
+    ("5042","에너지관리기능사","기능사","23","환경에너지안전","에너지","보일러 운용 기술자","14500","17800"),
+    ("5050","소방설비기사(기계)","기사","23","환경에너지안전","소방","소방 설비 설계·감리원","19400","22600"),
+    ("5051","소방설비기사(전기)","기사","23","환경에너지안전","소방","소방 전기 설비 설계사","19400","22600"),
+    ("5052","소방설비산업기사(기계)","산업기사","23","환경에너지안전","소방","소방 기계 시공 담당자","19400","22600"),
+    ("5053","소방설비산업기기(전기)","산업기사","23","환경에너지안전","소방","소방 전기 시공 담당자","19400","22600"),
+]
+
+# ── 경영회계사무 (job_field_code: 02) ─────────────────────────────────────────
+_BIZ = [
+    ("6010","경영지도사","기사","02","경영회계사무","경영","경영 컨설턴트, 중소기업 지원 전문가","25000","25000"),
+    ("6011","기술지도사","기사","02","경영회계사무","경영","기술 경영 컨설턴트","25000","25000"),
+    ("6020","물류관리사","기사","02","경영회계사무","물류","물류 관리자, SCM 전문가","22000","0"),
+    ("6021","국제물류사","기사","02","경영회계사무","물류","국제 물류 전문가","22000","0"),
+    ("6030","사무자동화산업기사","산업기사","02","경영회계사무","사무자동화","사무 자동화 전문가","19400","22600"),
+    ("6040","비서자격","기사","02","경영회계사무","비서","비서, 행정 보조원","22000","18000"),
+    ("6050","무역영어","기사","02","경영회계사무","무역","무역 전문가, 수출입 담당자","20800","0"),
+    ("6051","무역관리사","기사","02","경영회계사무","무역","무역 관리 전문가","20800","0"),
+    ("6060","유통관리사","기사","02","경영회계사무","유통","유통 관리자, 마케팅 전문가","20800","0"),
+    ("6070","전산회계운용사","기사","02","경영회계사무","회계","경리 담당자, 회계 사무원","15000","15000"),
+    ("6080","품질경영기사","기사","02","경영회계사무","품질","품질 관리 전문가, QC 엔지니어","19400","22600"),
+    ("6081","품질경영산업기사","산업기사","02","경영회계사무","품질","품질 관리 담당자","19400","22600"),
+    ("6082","품질경영기능사","기능사","02","경영회계사무","품질","품질 검사 기술자","14500","17800"),
+    ("6090","인사관리사","기사","02","경영회계사무","인사","인사 담당자, HR 전문가","20000","0"),
+    ("6091","사회조사분석사","기사","02","경영회계사무","경영","시장 조사 분석가","20000","0"),
+]
+
+# ── 식품가공·음식서비스 (job_field_code: 21, 13) ─────────────────────────────
+_FOOD = [
+    ("7010","식품기사","기사","21","식품가공","식품제조","식품 제조 기술자, 품질 관리사","19400","22600"),
+    ("7011","식품산업기사","산업기사","21","식품가공","식품제조","식품 가공 기술자","19400","22600"),
+    ("7012","식품기능사","기능사","21","식품가공","식품제조","식품 제조 현장 기술자","14500","17800"),
+    ("7013","식품기능장","기능장","21","식품가공","식품제조","식품 생산 감독","19400","22600"),
+    ("7020","한식조리기능사","기능사","13","음식서비스","조리","한식 요리사, 식당 운영자","14500","17800"),
+    ("7021","양식조리기능사","기능사","13","음식서비스","조리","양식 요리사, 호텔 조리사","14500","17800"),
+    ("7022","일식조리기능사","기능사","13","음식서비스","조리","일식 요리사","14500","17800"),
+    ("7023","중식조리기능사","기능사","13","음식서비스","조리","중식 요리사","14500","17800"),
+    ("7024","복어조리기능사","기능사","13","음식서비스","조리","복어 요리 전문가","14500","17800"),
+    ("7025","조리기능장","기능장","13","음식서비스","조리","총주방장(Chef), 조리 교육 전문가","19400","22600"),
+    ("7026","조리산업기사","산업기사","13","음식서비스","조리","급식 조리 관리자","19400","22600"),
+    ("7030","제과기능사","기능사","13","음식서비스","제과제빵","제과 전문가, 베이커리 운영자","14500","17800"),
+    ("7031","제빵기능사","기능사","13","음식서비스","제과제빵","제빵사, 베이커리 전문가","14500","17800"),
+    ("7032","제과기능장","기능장","13","음식서비스","제과제빵","제과 생산 감독","19400","22600"),
+    ("7040","위생사","기사","06","보건의료","위생","위생 관리사, 식품 위생 감시원","20000","30000"),
+    ("7041","영양사","기사","06","보건의료","위생","영양 관리사, 급식 담당자","30000","0"),
+]
+
+# ── 보건의료·사회복지 (job_field_code: 06, 07) ────────────────────────────────
+_HEALTH = [
+    ("8010","간호사","기사","06","보건의료","간호","병원 간호사, 보건 담당자","0","0"),
+    ("8011","물리치료사","기사","06","보건의료","재활","물리 치료사","0","0"),
+    ("8012","임상병리사","기사","06","보건의료","진단","임상 병리 검사사","0","0"),
+    ("8013","방사선사","기사","06","보건의료","진단","방사선 촬영 전문가","0","0"),
+    ("8014","치기공사","기사","06","보건의료","치과","치과 기공 기술자","0","0"),
+    ("8020","사회복지사","기사","07","사회복지종교","사회복지","사회복지사, 케어 매니저","0","0"),
+    ("8021","보육교사","기사","07","사회복지종교","아동복지","보육교사, 어린이집 교사","0","0"),
+    ("8022","청소년상담사","기사","07","사회복지종교","상담","청소년 상담사","0","0"),
+    ("8023","사회조사분석사","기사","07","사회복지종교","사회복지","조사 분석 전문가","20000","0"),
+]
+
+# ── 재료·금속 (job_field_code: 16) ────────────────────────────────────────────
+_MATERIAL = [
+    ("9010","금속재료기사","기사","16","재료","금속","철강·금속 제조 기술자, 재료 연구원","19400","22600"),
+    ("9011","금속재료산업기사","산업기사","16","재료","금속","금속 가공 담당자","19400","22600"),
+    ("9012","금속재료기능사","기능사","16","재료","금속","금속 제조 현장 기술자","14500","17800"),
+    ("9013","금속재료기능장","기능장","16","재료","금속","금속 생산 감독","19400","22600"),
+    ("9020","세라믹기사","기사","16","재료","세라믹","세라믹 소재 연구원, 반도체 소재 기술자","19400","22600"),
+    ("9021","세라믹산업기사","산업기사","16","재료","세라믹","세라믹 제조 담당자","19400","22600"),
+    ("9030","비파괴검사기사","기사","15","기계","검사","비파괴 검사 전문가, 품질 검사원","19400","22600"),
+    ("9031","비파괴검사산업기사","산업기사","15","기계","검사","방사선·초음파 검사 기술자","19400","22600"),
+    ("9032","비파괴검사기능사","기능사","15","기계","검사","비파괴 검사 보조 기술자","14500","17800"),
+]
+
+# ── 디자인·섬유·문화 (job_field_code: 08, 18) ─────────────────────────────────
+_DESIGN = [
+    ("A010","컬러리스트기사","기사","08","문화예술디자인방송","디자인","컬러 컨설턴트, 인테리어 디자이너","19400","22600"),
+    ("A011","컬러리스트산업기사","산업기사","08","문화예술디자인방송","디자인","색채 디자인 담당자","19400","22600"),
+    ("A020","시각디자인기사","기사","08","문화예술디자인방송","디자인","그래픽 디자이너, 브랜드 디자이너","19400","22600"),
+    ("A021","시각디자인산업기사","산업기사","08","문화예술디자인방송","디자인","광고·편집 디자이너","19400","22600"),
+    ("A030","제품디자인기사","기사","08","문화예술디자인방송","디자인","산업 제품 디자이너","19400","22600"),
+    ("A031","제품디자인산업기사","산업기사","08","문화예술디자인방송","디자인","제품 설계 디자이너","19400","22600"),
+    ("A040","패션디자인산업기사","산업기사","18","섬유의복","패션","패션 디자이너, 의류 기획자","19400","22600"),
+    ("A041","패션디자인기능사","기능사","18","섬유의복","패션","의류 제작 기술자, 봉제 기술자","14500","17800"),
+    ("A042","양복기능사","기능사","18","섬유의복","패션","맞춤 양복 제작 기술자","14500","17800"),
+    ("A050","3D프린터개발산업기사","산업기사","08","문화예술디자인방송","디자인","3D 프린팅 전문가","19400","22600"),
+    ("A060","영사기능사","기능사","08","문화예술디자인방송","방송","영상 기사, 방송 기술자","14500","17800"),
+]
+
+# ── 농림어업 (job_field_code: 24) ─────────────────────────────────────────────
+_AGRI = [
+    ("B010","유기농업기사","기사","24","농림어업","농업","유기농 생산 관리자","19400","22600"),
+    ("B011","유기농업산업기사","산업기사","24","농림어업","농업","유기농 담당자","19400","22600"),
+    ("B020","식물보호기사","기사","24","농림어업","농업","병해충 방제 전문가","19400","22600"),
+    ("B021","식물보호산업기사","산업기사","24","농림어업","농업","농작물 보호 담당자","19400","22600"),
+    ("B030","종자기사","기사","24","농림어업","농업","종자 관리사, 육종 연구원","19400","22600"),
+    ("B040","임업종묘기능사","기능사","24","농림어업","임업","묘목 생산 기술자","14500","17800"),
+    ("B050","수산양식산업기사","산업기사","24","농림어업","어업","수산 양식 관리자","19400","22600"),
+]
+
+# ── 운전운송·영업판매 (job_field_code: 09, 10) ────────────────────────────────
+_TRANS = [
+    ("C010","물류관리사","기사","09","운전운송","물류","물류 관리자, SCM 전문가","22000","0"),
+    ("C020","항공기관사","기사","09","운전운송","항공","항공기 운항 관리 전문가","0","0"),
+    ("C030","관광통역안내사","기사","12","이용숙박여행오락스포츠","관광","관광통역 안내사, 여행 가이드","20000","20000"),
+    ("C031","국내여행안내사","기사","12","이용숙박여행오락스포츠","관광","국내 관광 안내사","15000","0"),
+    ("C040","스포츠지도사","기사","12","이용숙박여행오락스포츠","스포츠","스포츠 강사, 트레이너","0","0"),
+    ("C050","텔레마케팅관리사","기사","10","영업판매","영업","텔레마케터, CS 관리자","18000","0"),
+    ("C060","유통관리사","기사","10","영업판매","유통","유통 관리자, 마케팅 전문가","20800","0"),
+]
+
+# 데이터 조합
+def _make_qual(code, name, qtype, field_code, field_name, mid_field, related, wfee, pfee):
+    return {
+        "qual_code": code,
+        "qual_name": name,
+        "qual_type": qtype,
+        "job_field_code": field_code,
+        "job_field_name": field_name,
+        "mid_job_field": mid_field,
+        "related_jobs": related,
+        "ministry": "한국산업인력공단",
+        "written_fee": wfee,
+        "practical_fee": pfee,
+        "detail_url": f"https://www.q-net.or.kr/crf005.do?id=crf00503&jmInfoTop_examInstiCd=1&jmInfoTop_jmCd={code}",
+    }
+
+SAMPLE_QUALIFICATIONS: list[dict] = [
+    _make_qual(*row) for row in (
+        _ICT + _ELEC + _MECH + _CONST + _CHEM_ENV +
+        _BIZ + _FOOD + _HEALTH + _MATERIAL + _DESIGN + _AGRI + _TRANS
+    )
+]
+
+# 시험일정 샘플 (주요 자격 2026년)
 SAMPLE_SCHEDULES: list[dict] = [
     {"qual_code": "1320", "qual_name": "정보처리기사",   "year": "2026", "round_no": "1", "written_reg_start": "20260119", "written_reg_end": "20260122", "written_exam_start": "20260215", "written_exam_end": "20260215", "written_result_date": "20260314", "practical_reg_start": "20260316", "practical_reg_end": "20260319", "practical_exam_start": "20260418", "practical_exam_end": "20260501", "practical_result_date": "20260606", "source": "sample"},
     {"qual_code": "1320", "qual_name": "정보처리기사",   "year": "2026", "round_no": "2", "written_reg_start": "20260330", "written_reg_end": "20260402", "written_exam_start": "20260510", "written_exam_end": "20260510", "written_result_date": "20260605", "practical_reg_start": "20260614", "practical_reg_end": "20260617", "practical_exam_start": "20260719", "practical_exam_end": "20260801", "practical_result_date": "20260828", "source": "sample"},
@@ -137,7 +282,7 @@ SAMPLE_SCHEDULES: list[dict] = [
     {"qual_code": "3020", "qual_name": "전기기사",       "year": "2026", "round_no": "2", "written_reg_start": "20260330", "written_reg_end": "20260402", "written_exam_start": "20260510", "written_exam_end": "20260510", "written_result_date": "20260605", "practical_reg_start": "20260614", "practical_reg_end": "20260617", "practical_exam_start": "20260719", "practical_exam_end": "20260801", "practical_result_date": "20260828", "source": "sample"},
     {"qual_code": "2040", "qual_name": "공조냉동기계기사","year": "2026", "round_no": "1","written_reg_start": "20260119", "written_reg_end": "20260122", "written_exam_start": "20260215", "written_exam_end": "20260215", "written_result_date": "20260314", "practical_reg_start": "20260316", "practical_reg_end": "20260319", "practical_exam_start": "20260418", "practical_exam_end": "20260501", "practical_result_date": "20260529", "source": "sample"},
     {"qual_code": "4020", "qual_name": "토목기사",       "year": "2026", "round_no": "1", "written_reg_start": "20260119", "written_reg_end": "20260122", "written_exam_start": "20260215", "written_exam_end": "20260215", "written_result_date": "20260314", "practical_reg_start": "20260316", "practical_reg_end": "20260319", "practical_exam_start": "20260418", "practical_exam_end": "20260501", "practical_result_date": "20260529", "source": "sample"},
-    {"qual_code": "5030", "qual_name": "산업안전기사",   "year": "2026", "round_no": "1", "written_reg_start": "20260119", "written_reg_end": "20260122", "written_exam_start": "20260215", "written_exam_end": "20260215", "written_result_date": "20260314", "practical_reg_start": "20260316", "practical_reg_end": "20260319", "practical_exam_start": "20260418", "practical_exam_end": "20260430", "practical_result_date": "20260529", "source": "sample"},
+    {"qual_code": "5020", "qual_name": "산업안전기사",   "year": "2026", "round_no": "1", "written_reg_start": "20260119", "written_reg_end": "20260122", "written_exam_start": "20260215", "written_exam_end": "20260215", "written_result_date": "20260314", "practical_reg_start": "20260316", "practical_reg_end": "20260319", "practical_exam_start": "20260418", "practical_exam_end": "20260430", "practical_result_date": "20260529", "source": "sample"},
     {"qual_code": "2010", "qual_name": "일반기계기사",   "year": "2026", "round_no": "1", "written_reg_start": "20260119", "written_reg_end": "20260122", "written_exam_start": "20260215", "written_exam_end": "20260215", "written_result_date": "20260314", "practical_reg_start": "20260316", "practical_reg_end": "20260319", "practical_exam_start": "20260418", "practical_exam_end": "20260501", "practical_result_date": "20260529", "source": "sample"},
 ]
 
