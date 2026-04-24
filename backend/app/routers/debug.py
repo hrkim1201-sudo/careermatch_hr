@@ -9,65 +9,49 @@ from app.core.config import get_settings
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+_BASE_URL = "https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do"
+
 
 @router.get("/work24/raw")
 def work24_raw_response() -> dict[str, Any]:
-    """Work24 API 실제 응답을 그대로 반환합니다. 필드명 확인용."""
+    """Work24 실제 API 응답 확인용."""
     settings = get_settings()
 
     keys_present = {
-        "work24_api_key": bool(settings.work24_api_key),
-        "work24_kdt_api_key": bool(settings.work24_kdt_api_key),
+        "work24_api_key":           bool(settings.work24_api_key),
+        "work24_kdt_api_key":       bool(settings.work24_kdt_api_key),
         "work24_apprentice_api_key": bool(settings.work24_apprentice_api_key),
         "work24_capability_api_key": bool(settings.work24_capability_api_key),
     }
 
-    test_cases = [
-        {
-            "name": "kdt_endpoint",
-            "url": "https://www.work24.go.kr/cm/openApi/call/wk/workApiWkKdt.do",
-            "key": settings.work24_kdt_api_key or settings.work24_api_key,
-        },
-        {
-            "name": "capability_endpoint",
-            "url": "https://www.work24.go.kr/cm/openApi/call/wk/workApiWkCapability.do",
-            "key": settings.work24_capability_api_key or settings.work24_api_key,
-        },
-        {
-            "name": "apprenticeship_endpoint",
-            "url": "https://www.work24.go.kr/cm/openApi/call/wk/workApiWkApprenticeship.do",
-            "key": settings.work24_apprentice_api_key or settings.work24_api_key,
-        },
+    test_keys = [
+        ("kdt",         settings.work24_kdt_api_key or settings.work24_api_key),
+        ("capability",  settings.work24_capability_api_key or settings.work24_api_key),
     ]
 
     results = {}
-    for case in test_cases:
-        if not case["key"]:
-            results[case["name"]] = {"error": "no api key configured"}
+    for name, api_key in test_keys:
+        if not api_key:
+            results[name] = {"error": "no api key"}
             continue
         try:
             with httpx.Client(timeout=12.0) as client:
                 resp = client.get(
-                    case["url"],
+                    _BASE_URL,
                     params={
-                        "authKey": case["key"],
-                        "returnType": "JSON",
-                        "pageSize": 3,
-                        "pageNum": 1,
-                        "outType": "1",
+                        "authKey": api_key,
+                        "callTp": "L",
+                        "returnType": "XML",
+                        "startPage": 1,
+                        "display": 3,
                     },
                 )
-                try:
-                    body = resp.json()
-                except Exception:
-                    body = resp.text[:3000]
-
-                results[case["name"]] = {
+                results[name] = {
                     "status_code": resp.status_code,
-                    "final_url": str(resp.url),
-                    "body": body,
+                    "url": str(resp.url),
+                    "body_preview": resp.text[:3000],
                 }
         except Exception as e:
-            results[case["name"]] = {"error": str(e)}
+            results[name] = {"error": str(e)}
 
     return {"keys_present": keys_present, "results": results}

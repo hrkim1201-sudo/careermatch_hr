@@ -1,7 +1,9 @@
 """Work24 고용24 Open API 클라이언트.
 
-프로그램 유형별로 별도 API 키와 엔드포인트를 사용합니다.
-페이지네이션으로 전체 데이터를 모두 수집합니다.
+실제 API 스펙:
+  Endpoint : https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do
+  Params   : authKey, callTp(L=목록), returnType(XML), startPage(1~1000), display(1~100)
+  Response : XML
 """
 from __future__ import annotations
 
@@ -9,6 +11,7 @@ import logging
 from typing import Any
 
 import httpx
+import xmltodict
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -17,16 +20,20 @@ from app.services.program_catalog import SAMPLE_PROGRAMS
 
 logger = logging.getLogger(__name__)
 
-_ENDPOINTS = {
-    "kdt": "https://www.work24.go.kr/cm/openApi/call/wk/workApiWkKdt.do",
-    "apprenticeship": "https://www.work24.go.kr/cm/openApi/call/wk/workApiWkApprenticeship.do",
-    "capability": "https://www.work24.go.kr/cm/openApi/call/wk/workApiWkCapability.do",
+# 실제 Work24 엔드포인트
+_BASE_URL = "https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do"
+
+# 유형별 occupation 코드 (Work24 직종코드 — 없으면 전체 조회)
+_TYPE_PARAMS: dict[str, dict] = {
+    "kdt":           {"srchTraProcessTitle": "", "srchTraArea1": ""},
+    "apprenticeship": {"srchTraProcessTitle": "", "srchTraArea1": ""},
+    "capability":    {"srchTraProcessTitle": "", "srchTraArea1": ""},
 }
 
 _CATEGORY_MAP = {
-    "kdt": "국민내일배움카드 훈련과정",
+    "kdt":            "국민내일배움카드 훈련과정",
     "apprenticeship": "일학습병행훈련과정",
-    "capability": "구직자취업역량 강화프로그램",
+    "capability":     "구직자취업역량 강화프로그램",
 }
 
 
@@ -36,9 +43,9 @@ def fetch_and_store(db: Session) -> tuple[int, str]:
     any_success = False
 
     fetch_targets = [
-        ("kdt",           settings.work24_kdt_api_key or settings.work24_api_key),
+        ("kdt",            settings.work24_kdt_api_key or settings.work24_api_key),
         ("apprenticeship", settings.work24_apprentice_api_key or settings.work24_api_key),
-        ("capability",    settings.work24_capability_api_key or settings.work24_api_key),
+        ("capability",     settings.work24_capability_api_key or settings.work24_api_key),
     ]
 
     for prog_type, api_key in fetch_targets:
@@ -54,7 +61,7 @@ def fetch_and_store(db: Session) -> tuple[int, str]:
             logger.warning("work24 [%s]: 0 programs returned", prog_type)
 
     if not any_success or not all_programs:
-        logger.warning("work24: all endpoints returned 0 results, fallback to sample")
+        logger.warning("work24: all endpoints returned 0, fallback to sample")
         n = program_repo.upsert_many(db, SAMPLE_PROGRAMS)
         return n, "sample"
 
@@ -64,38 +71,32 @@ def fetch_and_store(db: Session) -> tuple[int, str]:
 
 
 def _fetch_all_pages(prog_type: str, api_key: str, timeout: float) -> list[dict]:
-    """페이지네이션으로 전체 데이터 수집. 페이지 제한 없음."""
-    url = _ENDPOINTS.get(prog_type, _ENDPOINTS["kdt"])
+    """XML 응답을 파싱하며 전체 페이지 수집."""
     all_items: list[dict] = []
     page = 1
-    page_size = 100  # 한 번에 가져올 최대 건수
+    display = 100  # 최대
 
     try:
         with httpx.Client(timeout=httpx.Timeout(timeout)) as client:
             while True:
                 params = {
                     "authKey": api_key,
-                    "returnType": "JSON",
-                    "pageSize": page_size,
-                    "pageNum": page,
-                    "outType": "1",
+                    "callTp": "L",
+                    "returnType": "XML",
+                    "startPage": page,
+                    "display": display,
+                    **_TYPE_PARAMS.get(prog_type, {}),
                 }
-                logger.info("work24 [%s] fetching page %d", prog_type, page)
-                resp = client.get(url, params=params)
+                logger.info("work24 [%s] page %d", prog_type, page)
+                resp = client.get(_BASE_URL, params=params)
                 resp.raise_for_status()
 
-                data = resp.json()
-                items = _extract_items(data)
-
+                items = _parse_xml(resp.text)
                 if not items:
-                    logger.info("work24 [%s] page %d: empty, done", prog_type, page)
+                    logger.info("work24 [%s] page %d: empty → done", prog_type, page)
                     break
 
-                normalized = [
-                    _normalize(item, prog_type)
-                    for item in items
-                    if isinstance(item, dict)
-                ]
+                normalized = [_normalize(item, prog_type) for item in items]
                 normalized = [p for p in normalized if p.get("external_id")]
                 all_items.extend(normalized)
                 logger.info(
@@ -103,54 +104,66 @@ def _fetch_all_pages(prog_type: str, api_key: str, timeout: float) -> list[dict]
                     prog_type, page, len(normalized), len(all_items)
                 )
 
-                # 마지막 페이지 확인
-                if len(items) < page_size:
-                    logger.info("work24 [%s]: last page reached at page %d", prog_type, page)
+                if len(items) < display:
                     break
-
                 page += 1
 
     except Exception as e:
-        logger.warning("work24 [%s] fetch error at page %d: %s", prog_type, page, e)
+        logger.warning("work24 [%s] fetch error page %d: %s", prog_type, page, e)
 
     return all_items
 
 
-def _extract_items(data: Any) -> list[dict]:
-    if not isinstance(data, dict):
+def _parse_xml(xml_text: str) -> list[dict]:
+    """Work24 XML 응답에서 아이템 목록 파싱."""
+    try:
+        data = xmltodict.parse(xml_text)
+        # 가능한 응답 구조 탐색
+        root = data.get("result") or data.get("response") or data.get("resultInfo") or data
+        if not isinstance(root, dict):
+            return []
+
+        for key in ["srchList", "list", "items", "item", "content", "contents"]:
+            val = root.get(key)
+            if val is None:
+                # 한 단계 더 안으로
+                for subroot in root.values():
+                    if isinstance(subroot, dict):
+                        val = subroot.get(key)
+                        if val is not None:
+                            break
+            if isinstance(val, list):
+                return val
+            if isinstance(val, dict):
+                return [val]
+
         return []
-    for key in ["srchList", "returnUseYn", "contents", "list", "data", "items", "result"]:
-        val = data.get(key)
-        if isinstance(val, list):
-            return val
-        if isinstance(val, dict):
-            for subkey in ["srchList", "list", "items", "contents"]:
-                sub = val.get(subkey)
-                if isinstance(sub, list):
-                    return sub
-    return []
+    except Exception as e:
+        logger.warning("xml parse error: %s | preview: %s", e, xml_text[:300])
+        return []
 
 
 def _normalize(raw: dict, prog_type: str) -> dict:
     external_id = str(
-        raw.get("trprId") or raw.get("instCd") or raw.get("courseId") or ""
+        raw.get("trprId") or raw.get("recrutPblntSn") or
+        raw.get("instCd") or raw.get("id") or ""
     ).strip()
     if not external_id:
         return {}
 
     return {
-        "title": str(raw.get("trprNm") or raw.get("courseName") or raw.get("title") or "").strip(),
-        "provider": str(raw.get("instNm") or raw.get("providerName") or "").strip() or None,
+        "title": str(raw.get("trprNm") or raw.get("recrutPbancTtl") or raw.get("title") or "").strip(),
+        "provider": str(raw.get("instNm") or raw.get("companyNm") or "").strip() or None,
         "program_type": prog_type,
         "category": _CATEGORY_MAP.get(prog_type, "국민내일배움카드 훈련과정"),
         "location": _parse_location(raw),
-        "summary": str(raw.get("contents") or raw.get("summary") or raw.get("trprDc") or "").strip() or None,
-        "target_audience": str(raw.get("trainTarget") or raw.get("targetAudience") or "").strip() or None,
-        "skills": str(raw.get("ncsCd") or raw.get("skills") or "").strip() or None,
-        "benefits": str(raw.get("subTit") or raw.get("benefits") or "").strip() or None,
+        "summary": str(raw.get("contents") or raw.get("trprDc") or raw.get("detailContents") or "").strip() or None,
+        "target_audience": str(raw.get("trainTarget") or raw.get("acntngMth") or "").strip() or None,
+        "skills": str(raw.get("ncsCd") or raw.get("occupation") or "").strip() or None,
+        "benefits": str(raw.get("subTit") or "").strip() or None,
         "schedule": _parse_schedule(raw),
-        "tuition": str(raw.get("courseMan") or raw.get("tuition") or "").strip() or None,
-        "url": str(raw.get("titleLink") or raw.get("url") or "").strip() or None,
+        "tuition": str(raw.get("courseMan") or raw.get("srwgPay") or "").strip() or None,
+        "url": str(raw.get("titleLink") or raw.get("detailUrl") or "").strip() or None,
         "source": "work24",
         "external_id": f"{prog_type}-{external_id}",
         "ncs_code": str(raw.get("ncsCd") or "").strip() or None,
@@ -161,34 +174,26 @@ def _normalize(raw: dict, prog_type: str) -> dict:
 
 def _parse_location(raw: dict) -> str | None:
     parts = [
-        str(raw.get("address") or "").strip(),
-        str(raw.get("sido") or "").strip(),
-        str(raw.get("sigungu") or "").strip(),
+        str(raw.get("workPlcNm") or raw.get("sido") or "").strip(),
+        str(raw.get("sigunguNm") or raw.get("sigungu") or "").strip(),
     ]
     loc = " ".join(p for p in parts if p)
-    if not loc:
-        online = str(raw.get("realClassYn") or raw.get("onlineYn") or "")
-        if online.upper() in ("Y", "1", "TRUE"):
-            return "온라인"
     return loc or None
 
 
 def _parse_schedule(raw: dict) -> str | None:
-    start = str(raw.get("traStartDate") or raw.get("startDate") or "").strip()
-    end = str(raw.get("traEndDate") or raw.get("endDate") or "").strip()
+    start = str(raw.get("traStartDate") or raw.get("recrutPbancBgngYmd") or "").strip()
+    end   = str(raw.get("traEndDate")   or raw.get("recrutPbancEndYmd")  or "").strip()
     if start and end:
         return f"{start} ~ {end}"
-    return start or str(raw.get("schedule") or "").strip() or None
+    return start or None
 
 
 def _extract_tags(raw: dict, prog_type: str) -> list[str]:
-    tags = []
-    if prog_type == "kdt":
-        tags.append("내일배움카드")
-    elif prog_type == "apprenticeship":
-        tags.append("일학습병행")
-    elif prog_type == "capability":
-        tags.append("취업역량강화")
+    tags: list[str] = []
+    label = {"kdt": "내일배움카드", "apprenticeship": "일학습병행", "capability": "취업역량강화"}
+    if prog_type in label:
+        tags.append(label[prog_type])
     ncs = str(raw.get("ncsNm") or "").strip()
     if ncs:
         tags.append(ncs)
