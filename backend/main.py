@@ -1,6 +1,4 @@
 """FastAPI entry point."""
-import subprocess
-import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,33 +8,15 @@ from app.core.logging import configure_logging
 
 configure_logging()
 
-from app.routers import jobs, match, portfolio, programs, qualifications
+import logging
+from app.routers import debug, jobs, match, portfolio, programs, qualifications
 
 logger = logging.getLogger(__name__)
-
-
-def _run_migrations() -> None:
-    """앱 시작 시 alembic 마이그레이션 자동 실행."""
-    try:
-        logger.info("running alembic migrations...")
-        result = subprocess.run(
-            ["alembic", "upgrade", "head"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.returncode == 0:
-            logger.info("migrations completed successfully")
-        else:
-            logger.error("migration failed: %s", result.stderr)
-    except Exception as e:
-        logger.error("migration error: %s", e)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
-    _run_migrations()
     logger.info("careermatch starting", extra={"ctx": {"env": settings.environment}})
     yield
     logger.info("careermatch shutting down")
@@ -58,6 +38,7 @@ def create_app() -> FastAPI:
     app.include_router(match.router,          prefix="/api/match",          tags=["match"])
     app.include_router(qualifications.router, prefix="/api/qualifications", tags=["qualifications"])
     app.include_router(jobs.router,           prefix="/api/jobs",           tags=["jobs"])
+    app.include_router(debug.router,          prefix="/api/debug",          tags=["debug"])
 
     @app.get("/", tags=["meta"])
     def root() -> dict:
