@@ -127,3 +127,29 @@ class MatchResult(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class JobPosting(Base):
+    """Work24 채용공고."""
+    __tablename__ = "job_postings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    external_id: Mapped[str] = mapped_column(String(200), unique=True, index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(500), nullable=False, index=True)
+    company: Mapped[str | None] = mapped_column(String(300))
+    location: Mapped[str | None] = mapped_column(String(200))
+    salary: Mapped[str | None] = mapped_column(String(200))
+    employment_type: Mapped[str | None] = mapped_column(String(100))
+    deadline: Mapped[str | None] = mapped_column(String(50))
+    summary: Mapped[str | None] = mapped_column(Text)
+    skills: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(Text)
+    ncs_code: Mapped[str | None] = mapped_column(String(50), index=True)
+    ncs_name: Mapped[str | None] = mapped_column(String(200))
+    tags: Mapped[list | None] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )

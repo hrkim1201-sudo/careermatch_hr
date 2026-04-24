@@ -21,34 +21,36 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  // Programs
   listPrograms: () => request("/api/programs"),
   seedPrograms: () => request("/api/programs/seed", { method: "POST" }),
-  // 자연어 직접 매칭 (새 엔드포인트)
+  refreshPrograms: () => request("/api/programs/refresh", { method: "POST" }),
+  // Match
   directMatch: (prompt, top_k) =>
-    request("/api/match/direct", {
-      method: "POST",
-      body: JSON.stringify({ prompt, top_k }),
-    }),
-  // 기존 매칭
+    request("/api/match/direct", { method: "POST", body: JSON.stringify({ prompt, top_k }) }),
   match: (payload) =>
     request("/api/match", { method: "POST", body: JSON.stringify(payload) }),
   generateGuide: (programId, payload) =>
-    request(`/api/match/${programId}/guide`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+    request(`/api/match/${programId}/guide`, { method: "POST", body: JSON.stringify(payload) }),
+  // Qualifications
   listQualifications: (params = {}) => {
     const qs = new URLSearchParams(
-      Object.fromEntries(
-        Object.entries(params).filter(([, v]) => v != null && v !== "")
-      )
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v != null && v !== ""))
     ).toString();
     return request(`/api/qualifications${qs ? "?" + qs : ""}`);
   },
-  refreshQualifications: () =>
-    request("/api/qualifications/refresh", { method: "POST" }),
-  seedQualifications: () =>
-    request("/api/qualifications/seed", { method: "POST" }),
+  refreshQualifications: () => request("/api/qualifications/refresh", { method: "POST" }),
+  seedQualifications: () => request("/api/qualifications/seed", { method: "POST" }),
+  // Jobs
+  listJobs: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v != null && v !== ""))
+    ).toString();
+    return request(`/api/jobs${qs ? "?" + qs : ""}`);
+  },
+  refreshJobs: () => request("/api/jobs/refresh", { method: "POST" }),
+  seedJobs: () => request("/api/jobs/seed", { method: "POST" }),
+  // Portfolio
   createPortfolio: (payload) =>
     request("/api/portfolio", { method: "POST", body: JSON.stringify(payload) }),
 };

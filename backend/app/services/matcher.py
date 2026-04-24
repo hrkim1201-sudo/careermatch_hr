@@ -1,16 +1,15 @@
-"""추천 엔진: 훈련과정 점수 계산 + 연관 국가자격 연계."""
+"""추천 엔진: 훈련과정 점수 계산 + 연관 국가자격 + 관련 채용공고."""
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
 
 import numpy as np
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.models import TrainingProgram
-from app.repositories import program_repo
-from app.schemas import MatchItem, MatchRequest, ProgramRead
+from app.repositories import job_repo, program_repo
+from app.schemas import JobPostingRead, MatchItem, MatchRequest, ProgramRead
 from app.services import embedding
 from app.services.ncs_mapper import find_related_qualifications
 
@@ -43,6 +42,7 @@ def run_match(db: Session, req: MatchRequest) -> tuple[list[MatchItem], str, int
         related_quals = find_related_qualifications(
             db, program, query_keywords, top_k=settings.qual_top_k
         )
+        related_jobs = _find_related_jobs(db, program, query_keywords)
         items.append(
             MatchItem(
                 id=program.id,
@@ -50,6 +50,7 @@ def run_match(db: Session, req: MatchRequest) -> tuple[list[MatchItem], str, int
                 score=round(score * 100, 2),
                 reason_keywords=_pick_reason_keywords(query, program),
                 related_qualifications=related_quals,
+                related_jobs=related_jobs,
             )
         )
 
@@ -58,6 +59,19 @@ def run_match(db: Session, req: MatchRequest) -> tuple[list[MatchItem], str, int
         extra={"ctx": {"method": used_method, "candidates": len(programs), "returned": len(items)}},
     )
     return items, used_method, len(programs)
+
+
+def _find_related_jobs(db: Session, program: TrainingProgram, query_keywords: list[str]) -> list[JobPostingRead]:
+    """훈련과정과 관련된 채용공고 최대 3개."""
+    keywords = []
+    if program.ncs_name:
+        keywords.append(program.ncs_name)
+    if program.skills:
+        keywords.extend(program.skills.split()[:3])
+    keywords.extend(query_keywords[:3])
+    keywords = list(dict.fromkeys(keywords))[:5]
+    jobs = job_repo.find_by_keywords(db, keywords, limit=3)
+    return [JobPostingRead.model_validate(j) for j in jobs]
 
 
 def _program_to_text(p: TrainingProgram) -> str:
@@ -79,8 +93,6 @@ def _build_query_text(req: MatchRequest) -> str:
         for v in req.preferences.values():
             if isinstance(v, str) and v:
                 bits.append(v)
-            elif isinstance(v, list):
-                bits.append(" ".join(str(x) for x in v))
     return " ".join(bits).strip() or "취업 준비"
 
 

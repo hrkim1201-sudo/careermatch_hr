@@ -120,6 +120,7 @@ class MatchItem(BaseModel):
     guide: str | None = None
     questions: list[str] = Field(default_factory=list)
     related_qualifications: list[RelatedQualification] = Field(default_factory=list)
+    related_jobs: list["JobPostingRead"] = Field(default_factory=list)
 
 
 class MatchRequest(BaseModel):
@@ -158,3 +159,34 @@ class DirectMatchRequest(BaseModel):
     """자연어 입력 → 파싱 → 추천을 한 번에."""
     prompt: str
     top_k: int | None = None
+
+
+# ── Job Postings ─────────────────────────────────────────────────────────────
+class JobPostingRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    external_id: str
+    title: str
+    company: str | None = None
+    location: str | None = None
+    salary: str | None = None
+    employment_type: str | None = None
+    deadline: str | None = None
+    summary: str | None = None
+    skills: str | None = None
+    url: str | None = None
+    ncs_code: str | None = None
+    ncs_name: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    created_at: datetime
+
+
+class JobListResponse(BaseModel):
+    jobs: list[JobPostingRead]
+    total: int
+    source: str
+
+
+class JobRefreshResponse(BaseModel):
+    fetched: int
+    source: str

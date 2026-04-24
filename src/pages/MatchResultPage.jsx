@@ -8,6 +8,7 @@ import ProgramCard from "../components/program/ProgramCard.jsx";
 import MatchScoreBadge from "../components/match/MatchScoreBadge.jsx";
 import GuidePanel from "../components/match/GuidePanel.jsx";
 import QualificationCard from "../components/qualification/QualificationCard.jsx";
+import JobCard from "../components/job/JobCard.jsx";
 import { methodLabel } from "../lib/format.js";
 import styles from "./MatchResultPage.module.css";
 
@@ -21,6 +22,7 @@ export default function MatchResultPage() {
   const [guideById, setGuideById] = useState({});
   const [guideLoadingId, setGuideLoadingId] = useState(null);
   const [expandedQuals, setExpandedQuals] = useState({});
+  const [expandedJobs, setExpandedJobs] = useState({});
   const ranRef = useRef(false);
 
   useEffect(() => {
@@ -51,13 +53,10 @@ export default function MatchResultPage() {
     }
   };
 
-  const toggleQuals = (id) =>
-    setExpandedQuals((s) => ({ ...s, [id]: !s[id] }));
+  const toggleQuals = (id) => setExpandedQuals((s) => ({ ...s, [id]: !s[id] }));
+  const toggleJobs = (id) => setExpandedJobs((s) => ({ ...s, [id]: !s[id] }));
 
-  const handleRetry = () => {
-    reset();
-    navigate("/");
-  };
+  const handleRetry = () => { reset(); navigate("/"); };
 
   return (
     <div className={styles.page}>
@@ -66,12 +65,12 @@ export default function MatchResultPage() {
         <div className={styles.navActions}>
           <Button onClick={() => navigate("/programs")}>훈련과정</Button>
           <Button onClick={() => navigate("/qualifications")}>국가자격</Button>
+          <Button onClick={() => navigate("/jobs")}>채용공고</Button>
           <Button variant="primary" onClick={handleRetry}>다시 검색</Button>
         </div>
       </nav>
 
       <main className={styles.container}>
-        {/* 입력한 내용 요약 */}
         {prompt && (
           <div className={styles.queryBox}>
             <span className={styles.queryLabel}>검색 내용</span>
@@ -115,22 +114,21 @@ export default function MatchResultPage() {
               <div className={styles.itemHead}>
                 <MatchScoreBadge score={item.score} />
                 {item.reason_keywords?.length > 0 && (
-                  <span className={styles.reason}>
-                    관련: {item.reason_keywords.join(", ")}
-                  </span>
+                  <span className={styles.reason}>관련: {item.reason_keywords.join(", ")}</span>
                 )}
               </div>
 
               <ProgramCard program={item.program} />
 
+              {/* 연관 국가자격 */}
               {item.related_qualifications?.length > 0 && (
-                <div className={styles.quals}>
-                  <button className={styles.qualsToggle} onClick={() => toggleQuals(item.id)}>
-                    🎓 관련 국가자격 {item.related_qualifications.length}개
+                <div className={styles.section}>
+                  <button className={styles.sectionToggle} onClick={() => toggleQuals(item.id)}>
+                    🏆 관련 국가자격 {item.related_qualifications.length}개
                     {expandedQuals[item.id] ? " ▲" : " ▼"}
                   </button>
                   {expandedQuals[item.id] && (
-                    <div className={styles.qualsGrid}>
+                    <div className={styles.grid}>
                       {item.related_qualifications.map((rq) => (
                         <QualificationCard
                           key={rq.qualification.qual_code}
@@ -145,10 +143,25 @@ export default function MatchResultPage() {
                 </div>
               )}
 
+              {/* 관련 채용공고 */}
+              {item.related_jobs?.length > 0 && (
+                <div className={styles.section}>
+                  <button className={styles.sectionToggle + " " + styles.jobToggle} onClick={() => toggleJobs(item.id)}>
+                    💼 관련 채용공고 {item.related_jobs.length}개
+                    {expandedJobs[item.id] ? " ▲" : " ▼"}
+                  </button>
+                  {expandedJobs[item.id] && (
+                    <div className={styles.grid}>
+                      {item.related_jobs.map((job) => (
+                        <JobCard key={job.id} job={job} compact />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className={styles.actions}>
-                <Button onClick={() => onShowGuide(item.program)}>
-                  학습 가이드 보기
-                </Button>
+                <Button onClick={() => onShowGuide(item.program)}>학습 가이드 보기</Button>
               </div>
               <GuidePanel
                 guide={guideById[item.program.id]?.guide}

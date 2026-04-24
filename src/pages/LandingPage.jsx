@@ -39,6 +39,7 @@ export default function LandingPage() {
         <div className={styles.navLinks}>
           <button className={styles.navBtn} onClick={() => navigate("/programs")}>훈련과정</button>
           <button className={styles.navBtn} onClick={() => navigate("/qualifications")}>국가자격</button>
+          <button className={styles.navBtn} onClick={() => navigate("/jobs")}>채용공고</button>
         </div>
       </nav>
 
