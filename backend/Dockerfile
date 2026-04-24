@@ -15,7 +15,8 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-# Railway는 PORT 환경변수를 동적으로 주입함
+RUN chmod +x start.sh
+
 EXPOSE 8000
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["/bin/bash", "start.sh"]
