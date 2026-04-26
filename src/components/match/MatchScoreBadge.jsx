@@ -1,12 +1,61 @@
+import { useState } from "react";
 import styles from "./MatchScoreBadge.module.css";
-import { formatScore } from "../../lib/format.js";
+
+function getScoreInfo(score) {
+  if (score >= 80) return { label: "Îß§Ïö∞ ?íÏùå", color: "#00e5b0", bg: "rgba(0,229,176,0.12)", border: "rgba(0,229,176,0.3)" };
+  if (score >= 60) return { label: "?íÏùå",     color: "#4f7cff", bg: "rgba(79,124,255,0.12)", border: "rgba(79,124,255,0.3)" };
+  if (score >= 40) return { label: "Î≥¥ÌÜµ",     color: "#fbbf24", bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.3)" };
+  return               { label: "Ï∞∏Í≥†",      color: "#8b97b8", bg: "rgba(139,151,184,0.10)", border: "rgba(139,151,184,0.25)" };
+}
+
+const CRITERIA = [
+  { range: "80 ~ 100", label: "Îß§Ïö∞ ?íÏùå", desc: "ÏßÅÎ¨¥¬∑ÏßÄ??∑Ïä§???§Ïàò Î∂Ä?? Í±∞Ïùò ÎßûÏ∂§?? },
+  { range: "60 ~ 79",  label: "?íÏùå",     desc: "ÏßÅÎ¨¥ Î∂ÑÏïº¬∑Ï£ºÏöî Í∏∞Ïà† ?ºÏπò" },
+  { range: "40 ~ 59",  label: "Î≥¥ÌÜµ",     desc: "Í¥Ä??Î∂ÑÏïº ?êÎäî ?ºÎ? ?§Ïõå???∞Í?" },
+  { range: "0 ~ 39",   label: "Ï∞∏Í≥†",     desc: "Í∞ÑÏ†ë ?∞Í?, ?§Î•∏ ?µÏÖòÍ≥?ÎπÑÍµê Ï∂îÏ≤ú" },
+];
 
 export default function MatchScoreBadge({ score }) {
-  let bandClass = styles.low;
-  if (score >= 70) bandClass = styles.high;
-  else if (score >= 40) bandClass = styles.mid;
+  const [showInfo, setShowInfo] = useState(false);
+  const info = getScoreInfo(score);
 
   return (
-    <span className={`${styles.badge} ${bandClass}`}>{formatScore(score)}</span>
+    <div className={styles.wrapper}>
+      <div
+        className={styles.badge}
+        style={{ color: info.color, background: info.bg, borderColor: info.border }}
+      >
+        <span className={styles.score}>{Math.round(score)}</span>
+        <span className={styles.unit}>??/span>
+        <span className={styles.levelDot} style={{ background: info.color }} />
+        <span className={styles.level}>{info.label}</span>
+        <button
+          className={styles.infoBtn}
+          onClick={(e) => { e.stopPropagation(); setShowInfo(!showInfo); }}
+          title="?êÏàò Í∏∞Ï? Î≥¥Í∏∞"
+        >?</button>
+      </div>
+
+      {showInfo && (
+        <div className={styles.tooltip} onClick={() => setShowInfo(false)}>
+          <div className={styles.tooltipHeader}>
+            <span>AI Ï∂îÏ≤ú ?êÏàò Í∏∞Ï?</span>
+            <button className={styles.closeBtn} onClick={() => setShowInfo(false)}>??/button>
+          </div>
+          <p className={styles.tooltipDesc}>
+            ?ÖÎ†• ?¥Ïö©Í≥??àÎ†®Í≥ºÏ†ï ?ïÎ≥¥Î•?AI(?ÑÎ≤†??Î™®Îç∏)Í∞Ä ?òÎ??ÅÏúºÎ°?ÎπÑÍµê???†ÏÇ¨?ÑÎ? 0~100?êÏúºÎ°??òÏÇ∞?©Îãà??
+          </p>
+          <div className={styles.criteria}>
+            {CRITERIA.map((c) => (
+              <div key={c.range} className={styles.criteriaRow}>
+                <span className={styles.criteriaRange}>{c.range}??/span>
+                <span className={styles.criteriaLabel}>{c.label}</span>
+                <span className={styles.criteriaDesc}>{c.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

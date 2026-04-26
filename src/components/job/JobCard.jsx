@@ -1,42 +1,26 @@
 import Card from "../common/Card.jsx";
-import Tag from "../common/Tag.jsx";
 import styles from "./JobCard.module.css";
 
-export default function JobCard({ job, compact = false }) {
+export default function JobCard({ job, compact }) {
   return (
-    <Card className={styles.card}>
+    <Card hoverable className={styles.card}>
       <div className={styles.head}>
-        <div className={styles.left}>
-          <div className={styles.title}>{job.title}</div>
-          <div className={styles.company}>{job.company || "기업명 비공개"}</div>
+        <div>
+          <h3 className={styles.title}>{job.title}</h3>
+          <span className={styles.company}>{job.company || "기업명 비공개"}</span>
         </div>
         {job.employment_type && (
-          <Tag variant="category">{job.employment_type}</Tag>
+          <span className={styles.typeBadge}>{job.employment_type}</span>
         )}
       </div>
-
       <div className={styles.meta}>
-        {job.location && (
-          <span className={styles.metaItem}>
-            <span className={styles.icon}>📍</span>{job.location}
-          </span>
-        )}
-        {job.salary && (
-          <span className={styles.metaItem}>
-            <span className={styles.icon}>💰</span>{job.salary}
-          </span>
-        )}
-        {job.deadline && (
-          <span className={styles.metaItem}>
-            <span className={styles.icon}>📅</span>~{job.deadline}
-          </span>
-        )}
+        {job.location && <span>📍 {job.location}</span>}
+        {job.salary && <span>💰 {job.salary}</span>}
+        {job.deadline && <span>📅 ~{job.deadline}</span>}
       </div>
-
       {!compact && job.summary && (
         <p className={styles.summary}>{job.summary}</p>
       )}
-
       {job.skills && (
         <div className={styles.skills}>
           {job.skills.split(/[\s,]+/).filter(Boolean).slice(0, 6).map((s) => (
@@ -44,18 +28,12 @@ export default function JobCard({ job, compact = false }) {
           ))}
         </div>
       )}
-
-      {job.url && job.url !== "https://www.work24.go.kr" && (
-        <a href={job.url} target="_blank" rel="noreferrer" className={styles.link}>
-          공고 자세히 보기 ↗
-        </a>
-      )}
-      {(!job.url || job.url === "https://www.work24.go.kr") && (
-        <a href={`https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do`}
-          target="_blank" rel="noreferrer" className={styles.link}>
-          고용24에서 확인하기 ↗
-        </a>
-      )}
+      <a
+        href={job.url && job.url !== "https://www.work24.go.kr" ? job.url : "https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do"}
+        target="_blank" rel="noreferrer" className={styles.link}
+      >
+        채용공고 확인하기 ↗
+      </a>
     </Card>
   );
 }

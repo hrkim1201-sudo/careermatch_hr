@@ -1,7 +1,22 @@
 .card {
-  background: var(--color-surface);
+  background: var(--card-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
-  margin-bottom: var(--space-4);
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hoverable { cursor: pointer; }
+.hoverable:hover {
+  border-color: var(--color-border-2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }

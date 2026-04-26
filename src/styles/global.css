@@ -1,12 +1,6 @@
-*,
-*::before,
-*::after { box-sizing: border-box; }
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
+html { -webkit-text-size-adjust: 100%; }
 
 body {
   background: var(--color-bg);
@@ -15,17 +9,21 @@ body {
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--transition), color var(--transition);
+  min-height: 100vh;
 }
 
 a { color: var(--color-primary); text-decoration: none; }
-a:hover { color: var(--color-primary-hover); }
+a:hover { color: var(--color-primary-h); }
+button, input, textarea, select { font-family: inherit; font-size: inherit; }
+h1,h2,h3,h4,h5 { font-weight: 700; line-height: 1.25; }
 
-button, textarea, input, select { font-family: inherit; font-size: inherit; }
-
-h1, h2, h3, h4 { margin: 0 0 var(--space-3); }
-
-/* 스크롤바 */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 3px; }
+
+/* 유틸 */
+.gradient-text {
+  background: linear-gradient(120deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}

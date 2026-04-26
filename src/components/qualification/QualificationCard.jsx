@@ -1,56 +1,39 @@
 import Card from "../common/Card.jsx";
 import Tag from "../common/Tag.jsx";
-import { formatExamDate, relevanceLabel } from "../../lib/format.js";
+import { formatExamDate } from "../../lib/format.js";
 import styles from "./QualificationCard.module.css";
 
-export default function QualificationCard({ qualification, relevance, nextExam, compact = false }) {
+const TYPE_VARIANT = { "기술사": "accent", "기능장": "accent", "기사": "category", "산업기사": "default", "기능사": "default" };
+
+export default function QualificationCard({ qualification: q, relevance, nextExam, compact }) {
   return (
-    <Card className={styles.card}>
-      <div className={styles.head}>
-        <div className={styles.name}>{qualification.qual_name}</div>
-        <div className={styles.badges}>
-          {qualification.qual_type && <Tag variant="category">{qualification.qual_type}</Tag>}
-          {relevance && <Tag>{relevanceLabel(relevance)}</Tag>}
-        </div>
+    <Card hoverable className={styles.card}>
+      <div className={styles.top}>
+        {q.qual_type && <Tag variant={TYPE_VARIANT[q.qual_type] || "default"}>{q.qual_type}</Tag>}
+        {q.job_field_name && <span className={styles.field}>{q.job_field_name}</span>}
       </div>
-
-      {!compact && qualification.job_field_name && (
-        <div className={styles.field}>
-          직무분야: {qualification.job_field_name}
-          {qualification.mid_job_field && ` > ${qualification.mid_job_field}`}
+      <h3 className={styles.name}>{q.qual_name}</h3>
+      {q.mid_job_field && <p className={styles.sub}>{q.mid_job_field}</p>}
+      {q.related_jobs && !compact && (
+        <p className={styles.jobs}>{q.related_jobs}</p>
+      )}
+      {(q.written_fee || q.practical_fee) && !compact && (
+        <div className={styles.fees}>
+          {q.written_fee && q.written_fee !== "0" && <span>필기 {parseInt(q.written_fee).toLocaleString()}원</span>}
+          {q.practical_fee && q.practical_fee !== "0" && <span>실기 {parseInt(q.practical_fee).toLocaleString()}원</span>}
         </div>
       )}
-
-      {!compact && qualification.related_jobs && (
-        <p className={styles.jobs}>{qualification.related_jobs}</p>
-      )}
-
       {nextExam && (
         <div className={styles.exam}>
-          <span className={styles.examLabel}>다음 시험</span>
-          <div className={styles.examDates}>
-            {nextExam.year && <span>{nextExam.year}년 {nextExam.round_no}회</span>}
-            {nextExam.written_exam_start && (
-              <span>
-                필기 {formatExamDate(nextExam.written_exam_start)}
-                {nextExam.written_exam_end !== nextExam.written_exam_start
-                  ? ` ~ ${formatExamDate(nextExam.written_exam_end)}`
-                  : ""}
-              </span>
-            )}
-            {nextExam.practical_exam_start && (
-              <span>실기 {formatExamDate(nextExam.practical_exam_start)}</span>
-            )}
-          </div>
+          <span className={styles.examDot} />
+          {nextExam.year}년 {nextExam.round_no}회 시험
+          {nextExam.written_exam_start && ` · ${formatExamDate(nextExam.written_exam_start)}`}
         </div>
       )}
-
-      {qualification.detail_url && (
-        <div className={styles.footer}>
-          <a href={qualification.detail_url} target="_blank" rel="noreferrer" className={styles.link}>
-            Q-Net 상세보기 ↗
-          </a>
-        </div>
+      {q.detail_url && (
+        <a href={q.detail_url} target="_blank" rel="noreferrer" className={styles.link}>
+          Q-Net 상세보기 ↗
+        </a>
       )}
     </Card>
   );
