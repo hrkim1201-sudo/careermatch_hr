@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # --- OpenAI ---
     openai_api_key: str | None = None
-    openai_embedding_model: str = "text-embedding-3-small"
+    openai_embedding_model: str = "text-embedding-3-large"
     openai_chat_model: str = "gpt-4o-mini"
     openai_request_timeout: float = 15.0
 
