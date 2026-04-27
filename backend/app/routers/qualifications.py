@@ -10,7 +10,6 @@ from app.schemas import (
     ExamScheduleRead,
     QualificationListResponse,
     QualificationRead,
-    QualificationWithSchedule,
     QualRefreshResponse,
 )
 from app.services import qnet_qualifications
@@ -34,20 +33,20 @@ def list_qualifications(
 ) -> QualificationListResponse:
     _auto_seed_if_empty(db)
     items = qualification_repo.list_qualifications(db, q=q, qual_type=qual_type)
-    # 각 자격에 다음 시험일정 포함
-    with_schedules = []
+
+    quals = [QualificationRead.model_validate(item) for item in items]
+
+    # 각 자격의 다음 시험일정을 dict로 제공
+    schedules: dict = {}
     for item in items:
         sched = qualification_repo.upcoming_schedule(db, item.qual_code)
-        with_schedules.append(
-            QualificationWithSchedule(
-                qualification=QualificationRead.model_validate(item),
-                next_exam=ExamScheduleRead.model_validate(sched) if sched else None,
-            )
-        )
+        if sched:
+            schedules[item.qual_code] = ExamScheduleRead.model_validate(sched).model_dump()
+
     return QualificationListResponse(
-        qualifications=[ws.qualification for ws in with_schedules],
-        schedules={ws.qualification.qual_code: ws.next_exam for ws in with_schedules if ws.next_exam},
-        total=len(with_schedules),
+        qualifications=quals,
+        schedules=schedules,
+        total=len(quals),
     )
 
 

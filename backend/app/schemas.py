@@ -68,7 +68,7 @@ class QualificationWithSchedule(BaseModel):
 
 class QualificationListResponse(BaseModel):
     qualifications: list[QualificationRead]
-    schedules: dict[str, "ExamScheduleRead"] = Field(default_factory=dict)
+    schedules: dict[str, Any] = Field(default_factory=dict)
     total: int
 
 
