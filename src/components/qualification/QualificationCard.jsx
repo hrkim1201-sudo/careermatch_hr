@@ -8,17 +8,9 @@ const TYPE_VARIANT = {
   "기사": "category", "산업기사": "default", "기능사": "default",
 };
 
-function buildQnetUrl(qualCode, qualName) {
-  if (qualCode && !qualCode.startsWith("s-") && !qualCode.includes("sample")) {
-    return `https://www.q-net.or.kr/crf005.do?id=crf00503&jmInfoTop_examInstiCd=1&jmInfoTop_jmCd=${qualCode}`;
-  }
-  // 코드가 없으면 이름으로 검색
-  const encoded = encodeURIComponent(qualName || "");
-  return `https://www.q-net.or.kr/crf005.do?id=crf00505&kw=${encoded}`;
-}
-
 export default function QualificationCard({ qualification: q, relevance, nextExam, compact }) {
-  const qnetUrl = q.detail_url || buildQnetUrl(q.qual_code, q.qual_name);
+  // 자격명 기반 Q-Net 검색 URL (가장 확실하게 해당 자격 페이지로 이동)
+  const qnetUrl = `https://www.q-net.or.kr/crf005.do?id=crf00505&kw=${encodeURIComponent(q.qual_name)}`;
 
   return (
     <Card hoverable className={styles.card}>
@@ -60,7 +52,7 @@ export default function QualificationCard({ qualification: q, relevance, nextExa
         className={styles.link}
         onClick={(e) => e.stopPropagation()}
       >
-        Q-Net 자격 정보 보기 ↗
+        Q-Net에서 {q.qual_name} 보기 ↗
       </a>
     </Card>
   );
