@@ -8,11 +8,19 @@ from app.repositories import program_repo
 
 
 def _p(eid, title, provider, ptype, category, location, summary, target, skills, benefits, schedule, tuition, ncs_code, ncs_name, tags):
+    import urllib.parse as _up
+    # 훈련과정 유형별 검색 URL
+    if ptype in ("kdt", "training"):
+        url = f"https://www.work24.go.kr/wk/a/b/1300/retriveSrchTraPbancInfoList.do?schText={_up.quote(title)}"
+    elif ptype == "apprenticeship":
+        url = f"https://www.work24.go.kr/wk/a/b/1300/retriveSrchTraPbancInfoList.do?schMmeCd1=A&schText={_up.quote(title)}"
+    else:  # capability
+        url = f"https://www.work24.go.kr/wk/a/b/1400/retriveSrchJobAbilInfoList.do?schText={_up.quote(title)}"
     return {
         "title": title, "provider": provider, "program_type": ptype,
         "category": category, "location": location, "summary": summary,
         "target_audience": target, "skills": skills, "benefits": benefits,
-        "schedule": schedule, "tuition": tuition, "url": "",
+        "schedule": schedule, "tuition": tuition, "url": url,
         "source": "sample", "external_id": eid,
         "ncs_code": ncs_code, "ncs_name": ncs_name, "tags": tags,
     }

@@ -251,6 +251,12 @@ _TRANS = [
 
 # 데이터 조합
 def _make_qual(code, name, qtype, field_code, field_name, mid_field, related, wfee, pfee):
+    import urllib.parse as _up
+    # 자격코드가 영숫자 4자리면 Q-Net 상세 페이지로, 아니면 검색 페이지로
+    if code and len(code) >= 3 and code[0].isdigit():
+        detail_url = f"https://www.q-net.or.kr/crf005.do?id=crf00503&jmInfoTop_examInstiCd=1&jmInfoTop_jmCd={code}"
+    else:
+        detail_url = f"https://www.q-net.or.kr/crf005.do?id=crf00505&kw={_up.quote(name)}"
     return {
         "qual_code": code,
         "qual_name": name,
@@ -262,7 +268,7 @@ def _make_qual(code, name, qtype, field_code, field_name, mid_field, related, wf
         "ministry": "한국산업인력공단",
         "written_fee": wfee,
         "practical_fee": pfee,
-        "detail_url": f"https://www.q-net.or.kr/crf005.do?id=crf00503&jmInfoTop_examInstiCd=1&jmInfoTop_jmCd={code}",
+        "detail_url": detail_url,
     }
 
 SAMPLE_QUALIFICATIONS: list[dict] = [
