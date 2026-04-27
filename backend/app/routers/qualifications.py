@@ -10,6 +10,7 @@ from app.schemas import (
     ExamScheduleRead,
     QualificationListResponse,
     QualificationRead,
+    QualificationWithSchedule,
     QualRefreshResponse,
 )
 from app.services import qnet_qualifications
@@ -21,7 +22,7 @@ router = APIRouter()
 
 def _auto_seed_if_empty(db: Session) -> None:
     if qualification_repo.count_qualifications(db) == 0:
-        logger.info("qualifications empty — auto-seeding sample data")
+        logger.info("qualifications empty — auto-seeding")
         seed_sample_qualifications(db)
 
 
@@ -33,41 +34,50 @@ def list_qualifications(
 ) -> QualificationListResponse:
     _auto_seed_if_empty(db)
     items = qualification_repo.list_qualifications(db, q=q, qual_type=qual_type)
+    # 각 자격에 다음 시험일정 포함
+    with_schedules = []
+    for item in items:
+        sched = qualification_repo.upcoming_schedule(db, item.qual_code)
+        with_schedules.append(
+            QualificationWithSchedule(
+                qualification=QualificationRead.model_validate(item),
+                next_exam=ExamScheduleRead.model_validate(sched) if sched else None,
+            )
+        )
     return QualificationListResponse(
-        qualifications=[QualificationRead.model_validate(i) for i in items],
-        total=len(items),
+        qualifications=[ws.qualification for ws in with_schedules],
+        schedules={ws.qualification.qual_code: ws.next_exam for ws in with_schedules if ws.next_exam},
+        total=len(with_schedules),
     )
 
 
 @router.post("/seed", response_model=QualRefreshResponse)
 def seed_qualifications(db: Session = Depends(get_db)) -> QualRefreshResponse:
-    """샘플 자격 데이터를 시딩합니다. Q-Net API 없이 동작합니다."""
     fetched, schedules = seed_sample_qualifications(db)
     return QualRefreshResponse(fetched=fetched, schedules_fetched=schedules)
 
 
 @router.post("/refresh", response_model=QualRefreshResponse)
 def refresh_qualifications(db: Session = Depends(get_db)) -> QualRefreshResponse:
-    """Q-Net에서 자격 데이터를 가져옵니다. 실패하면 샘플 데이터로 fallback합니다."""
     try:
         fetched, schedules = qnet_qualifications.fetch_and_store(db)
         if fetched == 0:
-            raise ValueError("Q-Net returned 0 items")
+            raise ValueError("empty")
         return QualRefreshResponse(fetched=fetched, schedules_fetched=schedules)
     except Exception as e:
-        logger.warning("Q-Net fetch failed (%s), falling back to sample data", e)
+        logger.warning("Q-Net failed: %s, fallback", e)
         fetched, schedules = seed_sample_qualifications(db)
         return QualRefreshResponse(fetched=fetched, schedules_fetched=schedules)
 
 
 @router.get("/{qual_code}/schedules", response_model=list[ExamScheduleRead])
-def get_schedules(qual_code: str, db: Session = Depends(get_db)) -> list[ExamScheduleRead]:
+def get_schedules(qual_code: str, db: Session = Depends(get_db)):
     scheds = qualification_repo.list_schedules(db, qual_code=qual_code)
     return [ExamScheduleRead.model_validate(s) for s in scheds]
 
 
 @router.get("/{qual_code}", response_model=QualificationRead)
-def get_qualification(qual_code: str, db: Session = Depends(get_db)) -> QualificationRead:
+def get_qualification(qual_code: str, db: Session = Depends(get_db)):
     item = qualification_repo.get_by_qual_code(db, qual_code)
     if item is None:
         raise NotFoundError(f"qualification {qual_code} not found")

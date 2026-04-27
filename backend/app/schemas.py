@@ -59,8 +59,16 @@ class QualificationRead(BaseModel):
     created_at: datetime
 
 
+
+
+class QualificationWithSchedule(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    qualification: QualificationRead
+    next_exam: ExamScheduleRead | None = None
+
 class QualificationListResponse(BaseModel):
     qualifications: list[QualificationRead]
+    schedules: dict[str, "ExamScheduleRead"] = Field(default_factory=dict)
     total: int
 
 

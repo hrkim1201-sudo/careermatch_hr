@@ -9,7 +9,7 @@ const TYPES = ["전체", "기술사", "기능장", "기사", "산업기사", "�
 export default function QualificationsPage() {
   const [search, setSearch] = useState("");
   const [qualType, setQualType] = useState("전체");
-  const { qualifications, total, loading, error, load, refresh } = useQualifications();
+  const { qualifications, schedules, total, loading, error, load, refresh } = useQualifications();
 
   const handleSearch = () =>
     load({ q: search || undefined, qual_type: qualType === "전체" ? undefined : qualType });
@@ -59,7 +59,13 @@ export default function QualificationsPage() {
         )}
 
         <div className={styles.grid}>
-          {qualifications.map((q) => <QualificationCard key={q.qual_code} qualification={q} />)}
+          {qualifications.map((q) => (
+            <QualificationCard
+              key={q.qual_code}
+              qualification={q}
+              nextExam={schedules?.[q.qual_code] || null}
+            />
+          ))}
         </div>
       </main>
     </div>
