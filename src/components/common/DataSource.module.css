@@ -1,0 +1,22 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: 11px;
+  color: var(--color-text-dim);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-4);
+}
+.label { font-weight: 600; }
+.link { color: var(--color-text-dim); text-decoration: underline; }
+.link:hover { color: var(--color-primary); }
+.dot { opacity: 0.4; }
+.license {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  font-size: 10px;
+}

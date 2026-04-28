@@ -4,6 +4,7 @@ import ProgramsPage from "./pages/ProgramsPage.jsx";
 import MatchResultPage from "./pages/MatchResultPage.jsx";
 import QualificationsPage from "./pages/QualificationsPage.jsx";
 import JobsPage from "./pages/JobsPage.jsx";
+import PrivacyPage from "./pages/PrivacyPage.jsx";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
       <Route path="/match" element={<MatchResultPage />} />
       <Route path="/qualifications" element={<QualificationsPage />} />
       <Route path="/jobs" element={<JobsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
     </Routes>
   );
 }

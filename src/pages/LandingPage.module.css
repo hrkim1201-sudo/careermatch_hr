@@ -152,3 +152,17 @@
 }
 .featureLabel { font-size: 13px; font-weight: 700; color: var(--color-text); margin-bottom: 2px; }
 .featureDesc { font-size: 11px; color: var(--color-text-muted); line-height: 1.4; }
+
+.privacyLink {
+  text-align: center;
+  padding-bottom: var(--space-4);
+}
+.privacyBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.privacyBtn:hover { color: var(--color-primary); }

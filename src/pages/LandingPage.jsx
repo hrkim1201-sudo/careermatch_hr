@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePortfolioStore } from "../store/portfolioStore.js";
 import Nav from "../components/common/Nav.jsx";
+import DataSource from "../components/common/DataSource.jsx";
+import { useNavigate } from "react-router-dom";
 import styles from "./LandingPage.module.css";
 
 const EXAMPLES = [
@@ -99,6 +101,15 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+          {/* 데이터 출처 표기 (공공누리 의무) */}
+          <DataSource />
+          <div className={styles.privacyLink}>
+            <button className={styles.privacyBtn} onClick={() => navigate('/privacy')}>
+              개인정보처리방침
+            </button>
           </div>
         </div>
       </main>
