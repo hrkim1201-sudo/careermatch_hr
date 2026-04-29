@@ -44,7 +44,7 @@ export const api = {
   // Jobs
   listJobs: (params = {}) => {
     const qs = new URLSearchParams(
-      Object.fromEntries(Object.entries(params).filter(([, v]) => v != null && v !== ""))
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v != null && v !== "" && v !== 0))
     ).toString();
     return request(`/api/jobs${qs ? "?" + qs : ""}`);
   },
