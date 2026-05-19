@@ -19,6 +19,7 @@ export default function MatchResultPage() {
   const [results, setResults] = useState([]);
   const [usedMethod, setUsedMethod] = useState(null);
   const [parsedKeywords, setParsedKeywords] = useState([]);
+  const [parsedRegion, setParsedRegion] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [guideById, setGuideById] = useState({});
@@ -36,6 +37,7 @@ export default function MatchResultPage() {
         setResults(body.results || []);
         setUsedMethod(body.used_method);
         // 백엔드가 파싱된 키워드를 반환하면 사용, 없으면 reason_keywords 수집
+        if (body.parsed_region) setParsedRegion(body.parsed_region);
         if (body.parsed_keywords?.length) {
           setParsedKeywords(body.parsed_keywords);
         } else if (body.results?.length) {
@@ -86,7 +88,7 @@ export default function MatchResultPage() {
 
         {/* 포털 링크 - 결과 바로 위, 눈에 잘 띄는 위치 */}
         {!loading && results.length > 0 && parsedKeywords.length > 0 && (
-          <JobPortalLinks keywords={parsedKeywords} />
+          <JobPortalLinks keywords={parsedKeywords} region={parsedRegion} />
         )}
 
         {loading && (
