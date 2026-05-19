@@ -135,7 +135,6 @@ class MatchResponse(BaseModel):
     used_method: str
     total_candidates: int
     parsed_keywords: list[str] = Field(default_factory=list)
-    parsed_region: str | None = None
 
 
 class GuideResponse(BaseModel):

@@ -53,7 +53,6 @@ def direct_match(req: DirectMatchRequest, db: Session = Depends(get_db)) -> Matc
         used_method=used_method,
         total_candidates=total,
         parsed_keywords=portal_keywords,
-        parsed_region=parsed.get("region"),
     )
 
 
