@@ -1,4 +1,4 @@
-"""ì¶”ì²œ ?”ë“œ?¬ì¸??"""
+"""Match router - NCS-based career path recommendation."""
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -21,29 +21,39 @@ router = APIRouter()
 
 @router.post("/parse", response_model=ParsedInput)
 def parse_input(req: ParseRequest) -> ParsedInput:
-    """?ì—°???…ë ¥???Œì‹±?´ì„œ ì§€??·ìŠ¤??·ì˜¨?¼ì¸ ?¬ë?ë¥?ì¶”ì¶œ?©ë‹ˆ??"""
+    """Parse natural language input into structured search conditions."""
     result = parse_prompt(req.prompt)
-    return ParsedInput(**result)
+    return ParsedInput(
+        location=result.get("region"),
+        skills=result.get("job_keywords", []),
+        online=result.get("online", False),
+    )
 
 
 @router.post("/direct", response_model=MatchResponse)
 def direct_match(req: DirectMatchRequest, db: Session = Depends(get_db)) -> MatchResponse:
-    """?ì—°???…ë ¥ ???Œì‹± ??ì¶”ì²œ????ë²ˆì— ì²˜ë¦¬?©ë‹ˆ??"""
-    parsed = parse_prompt(req.prompt)
+    """Natural language input to recommendation in one step."""
+    parsed = parse_prompt(req.prompt or "")
+
     match_req = MatchRequest(
         prompt=req.prompt,
-        skills=parsed["skills"],
+        skills=parsed.get("job_keywords", []),
         preferences={
-            "location": parsed["location"],
-            "online": parsed["online"],
+            "location": parsed.get("region"),
+            "online": parsed.get("online", False),
         },
         top_k=req.top_k,
     )
+
     items, used_method, total = matcher.run_match(db, match_req)
-    from app.services.nlp_parser import parse_prompt as _pp
-    _parsed = _pp(req.prompt or "")
-    _kws = (_parsed.get("job_keywords") or [])[:3]
-    return MatchResponse(results=items, used_method=used_method, total_candidates=total, parsed_keywords=_kws)
+    portal_keywords = (parsed.get("job_keywords") or [])[:3]
+
+    return MatchResponse(
+        results=items,
+        used_method=used_method,
+        total_candidates=total,
+        parsed_keywords=portal_keywords,
+    )
 
 
 @router.post("", response_model=MatchResponse)
