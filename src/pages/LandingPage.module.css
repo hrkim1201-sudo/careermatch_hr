@@ -1,14 +1,15 @@
-.page { min-height: 100vh; overflow: hidden; }
+.page { min-height: 100vh; }
 
+/* ── 히어로 ───────────────────────────────────────────────── */
 .hero {
   position: relative;
   min-height: calc(100vh - var(--nav-h));
   display: flex; align-items: center; justify-content: center;
   background: var(--hero-bg);
   padding: var(--space-10) var(--space-5);
+  overflow: hidden;
 }
 
-/* 배경 장식 */
 .bgOrb1 {
   position: absolute; top: -20%; left: -10%;
   width: 600px; height: 600px;
@@ -41,58 +42,53 @@
   text-align: center; gap: var(--space-5);
 }
 
-/* 뱃지 */
-.badge {
+/* 서비스 정체성 배지 */
+.serviceBadge {
   display: inline-flex; align-items: center; gap: var(--space-2);
-  background: rgba(79,124,255,0.10);
-  border: 1px solid rgba(79,124,255,0.25);
-  border-radius: var(--radius-full);
-  padding: 6px var(--space-4);
-  font-size: 12px; font-weight: 600; color: var(--color-primary);
-  letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-2);
+  border-radius: var(--radius-lg);
+  padding: 8px var(--space-4);
+  font-size: 12px; font-weight: 600;
+  color: var(--color-text-muted);
+  box-shadow: var(--shadow-sm);
 }
-.badgeDot {
-  width: 6px; height: 6px; background: var(--color-accent);
-  border-radius: 50%; animation: pulse 2s ease infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.8); }
-}
+.badgeIcon { font-size: 14px; }
+.badgeSep { opacity: 0.4; }
+.badgeSub { color: var(--color-primary); }
 
 /* 헤드라인 */
 .h1 {
-  font-size: clamp(30px, 6vw, 54px);
+  font-size: clamp(30px, 6vw, 52px);
   font-weight: 800; letter-spacing: -1.5px; line-height: 1.2;
-  color: var(--color-text);
+  color: var(--color-text); margin: 0;
 }
-.highlight {
+.gradient {
   background: linear-gradient(120deg, var(--color-primary) 0%, var(--color-accent) 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 
 .sub {
   font-size: clamp(14px, 2.5vw, 17px); color: var(--color-text-muted);
-  line-height: 1.75; max-width: 580px;
+  line-height: 1.75; max-width: 560px; margin: 0;
 }
 .br { display: none; }
 @media (min-width: 600px) { .br { display: block; } }
 
-/* 입력 */
+/* 입력창 */
 .inputWrap {
   width: 100%;
   background: var(--color-surface);
   border: 1.5px solid var(--color-border-2);
   border-radius: var(--radius-xl);
   padding: var(--space-4);
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: border-color 0.2s, box-shadow 0.2s;
   box-shadow: var(--shadow-md);
 }
 .focused {
   border-color: var(--color-primary);
   box-shadow: var(--glow-primary), var(--shadow-md);
 }
-
 .textarea {
   width: 100%; background: transparent; border: none; outline: none;
   color: var(--color-text); font-size: 16px; line-height: 1.7;
@@ -104,15 +100,12 @@
   display: flex; align-items: flex-end; justify-content: space-between;
   gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap;
 }
-
-.examplesRow {
-  display: flex; flex-wrap: wrap; gap: 6px; flex: 1;
-}
+.examplesRow { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
 .exBtn {
   background: var(--color-surface-2); border: 1px solid var(--color-border);
   border-radius: var(--radius-full); color: var(--color-text-muted);
   font-size: 11px; padding: 4px 10px; cursor: pointer;
-  transition: all var(--transition); text-align: left; flex-shrink: 0;
+  transition: all 0.15s; flex-shrink: 0; text-align: left;
 }
 .exBtn:hover { color: var(--color-primary); border-color: rgba(79,124,255,0.4); background: rgba(79,124,255,0.06); }
 
@@ -121,48 +114,96 @@
   background: var(--color-primary); border: none; color: #fff;
   font-size: 14px; font-weight: 700; letter-spacing: -0.2px;
   padding: 10px var(--space-5); border-radius: var(--radius-full);
-  cursor: pointer; transition: all var(--transition);
+  cursor: pointer; transition: all 0.15s;
   box-shadow: 0 2px 16px rgba(79,124,255,0.4); white-space: nowrap; flex-shrink: 0;
 }
-.startBtn:hover:not(:disabled) {
-  background: var(--color-primary-h); transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(79,124,255,0.5);
-}
+.startBtn:hover:not(:disabled) { background: var(--color-primary-h); transform: translateY(-1px); }
 .startBtn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* 피처 */
-.features {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-3); width: 100%;
+/* 파트너 */
+.partnerRow {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: var(--space-2); justify-content: center;
 }
-@media (min-width: 640px) { .features { grid-template-columns: repeat(4, 1fr); } }
-
-.feature {
+.partnerLabel { font-size: 11px; color: var(--color-text-dim); }
+.partnerChip {
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: var(--radius-full);
   background: var(--color-surface); border: 1px solid var(--color-border);
-  border-radius: var(--radius-md); padding: var(--space-4);
-  display: flex; align-items: flex-start; gap: var(--space-3);
-  text-align: left; transition: border-color var(--transition);
+  color: var(--color-text-muted);
 }
-.feature:hover { border-color: var(--color-border-2); }
 
-.featureIcon {
-  font-size: 18px; color: var(--color-primary); flex-shrink: 0;
-  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+/* ── AI 작동 방식 ────────────────────────────────────────── */
+.aiSection {
+  background: var(--color-bg-2, var(--color-surface));
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-16) var(--space-5);
+}
+.aiInner { max-width: 1100px; margin: 0 auto; }
+
+.aiHeader { text-align: center; margin-bottom: var(--space-10); }
+.aiLabel {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--color-primary); margin-bottom: var(--space-3); display: block;
+}
+.aiTitle { font-size: clamp(22px, 4vw, 32px); font-weight: 800; margin: 0 0 var(--space-3); }
+.aiDesc { color: var(--color-text-muted); font-size: 15px; line-height: 1.7; margin: 0; }
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+@media (min-width: 768px) {
+  .stepsGrid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.stepCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-3);
+  position: relative;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.stepCard:hover { border-color: var(--color-border-2); transform: translateY(-2px); }
+
+.stepTop { display: flex; justify-content: space-between; align-items: center; }
+.stepNum {
+  font-size: 11px; font-weight: 800; color: var(--color-primary);
+  font-family: var(--font-mono, monospace); letter-spacing: 0.05em;
+}
+.stepArrow { font-size: 14px; color: var(--color-text-dim); }
+
+.stepIcon {
+  font-size: 22px; color: var(--color-primary);
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
   background: rgba(79,124,255,0.1); border-radius: var(--radius-sm);
 }
-.featureLabel { font-size: 13px; font-weight: 700; color: var(--color-text); margin-bottom: 2px; }
-.featureDesc { font-size: 11px; color: var(--color-text-muted); line-height: 1.4; }
 
-.privacyLink {
-  text-align: center;
-  padding-bottom: var(--space-4);
+.stepTitle { font-size: 15px; font-weight: 700; margin: 0; }
+.stepDesc { font-size: 12px; color: var(--color-text-muted); line-height: 1.6; margin: 0; flex: 1; }
+
+.stepAi { margin-top: auto; }
+.aiChip {
+  display: inline-block;
+  font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: var(--radius-full);
+  background: rgba(0,229,176,0.10);
+  color: var(--color-accent);
+  border: 1px solid rgba(0,229,176,0.25);
+  font-family: var(--font-mono, monospace);
+}
+
+/* ── 하단 ────────────────────────────────────────────────── */
+.footer {
+  max-width: 1100px; margin: 0 auto;
+  padding: 0 var(--space-5) var(--space-6);
 }
 .privacyBtn {
-  background: none;
-  border: none;
-  color: var(--color-text-dim);
-  font-size: 11px;
-  cursor: pointer;
-  text-decoration: underline;
+  background: none; border: none;
+  color: var(--color-text-dim); font-size: 11px;
+  cursor: pointer; text-decoration: underline;
 }
 .privacyBtn:hover { color: var(--color-primary); }

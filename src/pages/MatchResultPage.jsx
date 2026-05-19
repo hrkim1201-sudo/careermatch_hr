@@ -9,6 +9,7 @@ import MatchScoreBadge from "../components/match/MatchScoreBadge.jsx";
 import GuidePanel from "../components/match/GuidePanel.jsx";
 import QualificationCard from "../components/qualification/QualificationCard.jsx";
 import JobCard from "../components/job/JobCard.jsx";
+import JobPortalLinks from "../components/job/JobPortalLinks.jsx";
 import { methodLabel } from "../lib/format.js";
 import styles from "./MatchResultPage.module.css";
 
@@ -46,6 +47,21 @@ export default function MatchResultPage() {
   };
 
   const toggle = (setter, id) => setter((s) => ({ ...s, [id]: !s[id] }));
+
+  // 검색어에서 핵심 키워드 추출
+  const getSearchKeyword = () => {
+    if (!prompt) return "";
+    // 조사·불필요 단어 제거
+    return prompt
+      .replace(/[이가을를은는에서도와과]/g, " ")
+      .replace(/싶어요?|하고싶어|찾고있어|필요해|취업|공백|면접|준비|배우고|배우|원해|해요|이에요|입니다/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(" ")
+      .filter((w) => w.length > 1)
+      .slice(0, 3)
+      .join(" ");
+  };
 
   return (
     <div className={styles.page}>
@@ -101,8 +117,8 @@ export default function MatchResultPage() {
                   {expandedQuals[item.id] && (
                     <div className={styles.subGrid}>
                       {item.related_qualifications.map((rq) => (
-                        <QualificationCard key={rq.qualification.qual_code} qualification={rq.qualification}
-                          relevance={rq.relevance} nextExam={rq.next_exam} compact />
+                        <QualificationCard key={rq.qualification.qual_code}
+                          qualification={rq.qualification} nextExam={rq.next_exam} compact />
                       ))}
                     </div>
                   )}
@@ -138,6 +154,11 @@ export default function MatchResultPage() {
             </div>
           ))}
         </div>
+
+        {/* 채용 포털 멀티 링크 - 결과 하단 */}
+        {results.length > 0 && prompt && (
+          <JobPortalLinks keyword={getSearchKeyword()} />
+        )}
       </main>
     </div>
   );
