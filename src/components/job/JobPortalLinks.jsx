@@ -21,22 +21,25 @@ const PORTALS = [
     color: "#355eff",
     getUrl: (kw) => `https://www.wanted.co.kr/search?query=${encodeURIComponent(kw)}&tab=position`,
   },
-  {
-    name: "링크드인",
-    color: "#0077b5",
-    getUrl: (kw) => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(kw)}&location=%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD`,
-  },
 ];
 
-export default function JobPortalLinks({ keyword }) {
-  if (!keyword) return null;
-  const kw = keyword.replace(/\s*\(.*?\)/g, "").trim();
+export default function JobPortalLinks({ keywords }) {
+  // keywords: 배열 ["전기기사", "전기설비"] 또는 빈 배열
+  if (!keywords || keywords.length === 0) return null;
+
+  // 핵심 키워드만 사용 (최대 2개, 짧게)
+  const kw = keywords
+    .filter((k) => k && k.length >= 2)
+    .slice(0, 2)
+    .join(" ");
+
+  if (!kw) return null;
 
   return (
     <div className={styles.wrap}>
       <p className={styles.label}>
         <span className={styles.dot} />
-        <strong>"{kw}"</strong> 관련 채용공고를 각 포털에서 직접 검색하세요
+        <span><strong>"{kw}"</strong> 관련 채용공고를 각 포털에서 직접 검색하세요</span>
       </p>
       <div className={styles.portals}>
         {PORTALS.map((p) => (

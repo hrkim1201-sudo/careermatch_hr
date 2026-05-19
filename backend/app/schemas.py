@@ -134,6 +134,7 @@ class MatchResponse(BaseModel):
     results: list[MatchItem]
     used_method: str
     total_candidates: int
+    parsed_keywords: list[str] = Field(default_factory=list)
 
 
 class GuideResponse(BaseModel):

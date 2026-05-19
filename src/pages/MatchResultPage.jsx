@@ -18,6 +18,7 @@ export default function MatchResultPage() {
   const { prompt, reset } = usePortfolioStore();
   const [results, setResults] = useState([]);
   const [usedMethod, setUsedMethod] = useState(null);
+  const [parsedKeywords, setParsedKeywords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [guideById, setGuideById] = useState({});
@@ -31,7 +32,21 @@ export default function MatchResultPage() {
     ranRef.current = true;
     setLoading(true);
     api.directMatch(prompt)
-      .then((body) => { setResults(body.results || []); setUsedMethod(body.used_method); })
+      .then((body) => {
+        setResults(body.results || []);
+        setUsedMethod(body.used_method);
+        // 백엔드가 파싱된 키워드를 반환하면 사용, 없으면 reason_keywords 수집
+        if (body.parsed_keywords?.length) {
+          setParsedKeywords(body.parsed_keywords);
+        } else if (body.results?.length) {
+          // reason_keywords에서 중복 제거하여 핵심 키워드 추출
+          const kwSet = new Set();
+          body.results.forEach((r) =>
+            (r.reason_keywords || []).forEach((k) => kwSet.add(k))
+          );
+          setParsedKeywords([...kwSet].slice(0, 3));
+        }
+      })
       .catch((e) => setError(e.message || "추천에 실패했습니다."))
       .finally(() => setLoading(false));
   }, [prompt]);
@@ -47,21 +62,6 @@ export default function MatchResultPage() {
   };
 
   const toggle = (setter, id) => setter((s) => ({ ...s, [id]: !s[id] }));
-
-  // 검색어에서 핵심 키워드 추출
-  const getSearchKeyword = () => {
-    if (!prompt) return "";
-    // 조사·불필요 단어 제거
-    return prompt
-      .replace(/[이가을를은는에서도와과]/g, " ")
-      .replace(/싶어요?|하고싶어|찾고있어|필요해|취업|공백|면접|준비|배우고|배우|원해|해요|이에요|입니다/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .split(" ")
-      .filter((w) => w.length > 1)
-      .slice(0, 3)
-      .join(" ");
-  };
 
   return (
     <div className={styles.page}>
@@ -84,6 +84,11 @@ export default function MatchResultPage() {
           </button>
         </header>
 
+        {/* 포털 링크 - 결과 바로 위, 눈에 잘 띄는 위치 */}
+        {!loading && results.length > 0 && parsedKeywords.length > 0 && (
+          <JobPortalLinks keywords={parsedKeywords} />
+        )}
+
         {loading && (
           <div className={styles.loading}>
             <div className={styles.spinner} />
@@ -92,7 +97,8 @@ export default function MatchResultPage() {
         )}
         {error && <div className={styles.error}><p>{error}</p></div>}
         {!prompt && !loading && (
-          <Card><p>검색어가 없습니다.</p>
+          <Card>
+            <p>검색어가 없습니다.</p>
             <button className={styles.retryBtn} onClick={() => navigate("/")}>처음으로</button>
           </Card>
         )}
@@ -132,9 +138,7 @@ export default function MatchResultPage() {
                   </button>
                   {expandedJobs[item.id] && (
                     <div className={styles.subGrid}>
-                      {item.related_jobs.map((job) => (
-                        <JobCard key={job.id} job={job} compact />
-                      ))}
+                      {item.related_jobs.map((job) => <JobCard key={job.id} job={job} compact />)}
                     </div>
                   )}
                 </div>
@@ -154,11 +158,6 @@ export default function MatchResultPage() {
             </div>
           ))}
         </div>
-
-        {/* 채용 포털 멀티 링크 - 결과 하단 */}
-        {results.length > 0 && prompt && (
-          <JobPortalLinks keyword={getSearchKeyword()} />
-        )}
       </main>
     </div>
   );

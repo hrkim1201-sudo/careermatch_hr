@@ -40,7 +40,10 @@ def direct_match(req: DirectMatchRequest, db: Session = Depends(get_db)) -> Matc
         top_k=req.top_k,
     )
     items, used_method, total = matcher.run_match(db, match_req)
-    return MatchResponse(results=items, used_method=used_method, total_candidates=total)
+    from app.services.nlp_parser import parse_prompt as _pp
+    _parsed = _pp(req.prompt or "")
+    _kws = (_parsed.get("job_keywords") or [])[:3]
+    return MatchResponse(results=items, used_method=used_method, total_candidates=total, parsed_keywords=_kws)
 
 
 @router.post("", response_model=MatchResponse)
