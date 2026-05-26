@@ -11,8 +11,13 @@ export default function QualificationsPage() {
   const [qualType, setQualType] = useState("전체");
   const { qualifications, schedules, total, loading, error, load, refresh } = useQualifications();
 
-  const handleSearch = () =>
-    load({ q: search || undefined, qual_type: qualType === "전체" ? undefined : qualType });
+  const handleSearch = (type = qualType) =>
+    load({ q: search || undefined, qual_type: type === "전체" ? undefined : type });
+
+  const handleTypeClick = (t) => {
+    setQualType(t);
+    load({ q: search || undefined, qual_type: t === "전체" ? undefined : t });
+  };
 
   return (
     <div className={styles.page}>
@@ -37,14 +42,14 @@ export default function QualificationsPage() {
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="자격명 또는 직무분야 검색"
             />
-            <button className={styles.searchBtn} onClick={handleSearch}>검색</button>
+            <button className={styles.searchBtn} onClick={() => handleSearch()}>검색</button>
           </div>
           <div className={styles.typeRow}>
             {TYPES.map((t) => (
               <button
                 key={t}
                 className={`${styles.typeBtn} ${qualType === t ? styles.active : ""}`}
-                onClick={() => setQualType(t)}
+                onClick={() => handleTypeClick(t)}
               >
                 {t}
               </button>

@@ -24,15 +24,8 @@ const PORTALS = [
 ];
 
 export default function JobPortalLinks({ keywords }) {
-  // keywords: 배열 ["전기기사", "전기설비"] 또는 빈 배열
   if (!keywords || keywords.length === 0) return null;
-
-  // 핵심 키워드만 사용 (최대 2개, 짧게)
-  const kw = keywords
-    .filter((k) => k && k.length >= 2)
-    .slice(0, 2)
-    .join(" ");
-
+  const kw = keywords.filter((k) => k && k.length >= 2).slice(0, 2).join(" ");
   if (!kw) return null;
 
   return (
@@ -43,14 +36,8 @@ export default function JobPortalLinks({ keywords }) {
       </p>
       <div className={styles.portals}>
         {PORTALS.map((p) => (
-          <a
-            key={p.name}
-            href={p.getUrl(kw)}
-            target="_blank"
-            rel="noreferrer"
-            className={styles.btn}
-            style={{ "--c": p.color }}
-          >
+          <a key={p.name} href={p.getUrl(kw)} target="_blank" rel="noreferrer"
+            className={styles.btn} style={{ "--c": p.color }}>
             {p.name} ↗
           </a>
         ))}
